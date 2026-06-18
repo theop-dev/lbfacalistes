@@ -96,16 +96,14 @@ export default function Scanner({ onBack, onConfirm }) {
       ctx.closePath();
 
       if (active) {
-        ctx.shadowColor = hexRgba(zone.color, 0.8);
-        ctx.shadowBlur  = 18;
-        ctx.fillStyle   = hexRgba(zone.color, 0.42);
-      } else {
-        ctx.fillStyle = hexRgba(zone.color, 0.14);
+        ctx.shadowColor = hexRgba(zone.color, 0.9);
+        ctx.shadowBlur  = 20;
+        ctx.fillStyle   = hexRgba(zone.color, 0.38);
+        ctx.fill();
       }
-      ctx.fill();
 
-      ctx.strokeStyle = active ? hexRgba(zone.color, 0.95) : hexRgba(zone.color, 0.5);
-      ctx.lineWidth   = active ? 2 : 1;
+      ctx.strokeStyle = active ? hexRgba(zone.color, 1) : hexRgba(zone.color, 0.55);
+      ctx.lineWidth   = active ? 2.5 : 1.2;
 
       ctx.beginPath();
       ctx.moveTo(pts[0].x, pts[0].y);
