@@ -132,6 +132,38 @@ const ZONES = [
     ],
   },
 
+  // ── TEMPE DROITE (user right, lateral face strip from outer eye to jaw) ───────
+  // Outer edge: face silhouette 21→162→127→234. Inner: cheekbone area.
+  // Does NOT touch forehead or eyebrow landmarks.
+  {
+    id: 'right_temple',
+    name: 'Tempe droite',
+    icon: '◉',
+    color: '#FF6060',
+    poly: [21, 162, 127, 234, 93, 130, 247, 56, 190, 243],
+    desc: 'Zone temporale, migraines, détente, réflexologie',
+    tips: ['Point de pression anti-migraine sur la tempe', 'Massage circulaire doux pour relâcher les tensions', 'Zone très sensible — pression légère uniquement'],
+    tutorials: [
+      { title: 'Massage temporal : soulager les migraines', q: 'massage temporal soulager migraines technique beauté', dur: '~6 min' },
+      { title: 'Contouring tempes : affinement du visage', q: 'contouring tempes affinement visage tutoriel', dur: '~5 min' },
+    ],
+  },
+
+  // ── TEMPE GAUCHE (user left, lateral face strip from outer eye to jaw) ────────
+  {
+    id: 'left_temple',
+    name: 'Tempe gauche',
+    icon: '◉',
+    color: '#FF6060',
+    poly: [251, 389, 356, 454, 323, 359, 467, 286, 414, 463],
+    desc: 'Zone temporale, migraines, détente, réflexologie',
+    tips: ['Point de pression anti-migraine sur la tempe', 'Massage circulaire doux pour relâcher les tensions'],
+    tutorials: [
+      { title: 'Massage temporal : soulager les migraines', q: 'massage temporal soulager migraines technique beauté', dur: '~6 min' },
+      { title: 'Contouring tempes : affinement du visage', q: 'contouring tempes affinement visage tutoriel', dur: '~5 min' },
+    ],
+  },
+
   // ── POMMETTE DROITE (user right, high-cheekbone under right eye) ─────────────
   {
     id: 'right_cheekbone',
@@ -163,13 +195,15 @@ const ZONES = [
   },
 
   // ── JOUE DROITE (user right) — between cheekbone and jaw, nose to ear ────────
-  // ONLY uses mid-face landmarks, NOT upper silhouette/temple landmarks
+  // Bounded: top=cheekbone(130,247), inner=cheek-nose boundary(129,203,206,216,212),
+  // bottom=jaw(58,172,136), outer=silhouette(93,234)
+  // Does NOT overlap nose wing — stops at 129/203 (inner cheek near nose)
   {
     id: 'right_cheek',
     name: 'Joue droite',
     icon: '🌸',
     color: '#FF8CC8',
-    poly: [234, 93, 132, 58, 172, 97, 2, 164, 212, 216, 206, 203, 129, 64, 98, 97, 2, 45, 51, 128, 130, 247, 30, 29, 27, 56, 190, 234],
+    poly: [234, 93, 132, 58, 172, 136, 212, 216, 206, 203, 129, 142, 126, 217, 114, 128, 130, 247, 30, 29, 27, 56, 190],
     desc: 'Blush, contouring, hydratation, drainage lymphatique',
     tips: ['Sourire pour trouver la zone du blush', 'Massage drainant vers les oreilles', 'Hydrater matin et soir'],
     tutorials: [
@@ -252,12 +286,13 @@ const ZONES = [
   },
 
   // ── PHILTRUM (entre base du nez et lèvre sup) ────────────────────────────────
+  // Simple 5-point polygon: nose-base → cupid's-bow peaks → center dip
   {
     id: 'philtrum',
     name: 'Philtrum',
     icon: '▽',
     color: '#E08AFF',
-    poly: [2, 0, 267, 37, 84, 17, 314, 267, 269, 270, 409, 291, 409, 270, 269, 267, 0, 37, 39, 40, 185, 61, 185, 40, 39, 37, 0, 2],
+    poly: [1, 2, 267, 0, 37],
     desc: 'Arc de Cupidon, contour lèvres, highlighter',
     tips: ['Highlighter sur le philtrum pour agrandir la bouche', 'Zone clé pour le contour des lèvres'],
     tutorials: [
@@ -296,13 +331,17 @@ const ZONES = [
     ],
   },
 
-  // ── MENTON (chin tip only — NOT the full face oval) ──────────────────────────
+  // ── MENTON (chin only — starts BELOW the lower lip outer edge) ───────────────
+  // 17=lip-bottom-center, 91=left-below-mouth, 176=chin-left-silhouette,
+  // 148=chin-bottom-left, 152=chin-tip, 377=chin-bottom-right,
+  // 400=chin-right-silhouette, 321=right-below-mouth
+  // No lip landmarks (84,181,314,405 removed)
   {
     id: 'chin',
     name: 'Menton',
     icon: '◇',
     color: '#A882FF',
-    poly: [17, 84, 181, 91, 176, 148, 152, 377, 400, 378, 321, 405, 314],
+    poly: [17, 91, 176, 148, 152, 377, 400, 321],
     desc: 'Contouring, affinement, définition, soin',
     tips: ['Contouring sous le menton affine le visage', 'Hydrater — zone souvent sèche'],
     tutorials: [
