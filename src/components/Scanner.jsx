@@ -1,5 +1,6 @@
 import { useRef, useEffect, useCallback, useState } from 'react';
-import { FaceMesh } from '@mediapipe/face_mesh';
+// FaceMesh is loaded as a global script from CDN (see index.html)
+// Do NOT import from npm — Vite cannot bundle the MediaPipe WASM correctly
 import ZONES from '../data/zones';
 import ConfirmDialog from './ConfirmDialog';
 
@@ -186,7 +187,7 @@ export default function Scanner({ onBack, onConfirm }) {
 
   useEffect(() => {
     let active = true;
-    const fm = new FaceMesh({
+    const fm = new window.FaceMesh({
       locateFile: f => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${f}`,
     });
     fm.setOptions({ maxNumFaces: 1, refineLandmarks: true, minDetectionConfidence: 0.5, minTrackingConfidence: 0.5 });
