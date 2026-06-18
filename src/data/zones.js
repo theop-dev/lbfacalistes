@@ -13,11 +13,13 @@ const ZONES = [
     name: 'Front',
     icon: '✦',
     color: '#FF9A82',
-    poly: [10, 338, 297, 332, 284, 251, 389, 356,
+    // 389,356 (ear-level right) and 162 (ear-level left) removed — they pulled
+    // the polygon down to ear level, making the forehead look too short.
+    poly: [10, 338, 297, 332, 284, 251,
            300, 293, 334, 296, 336,
            9,
            107, 66, 105, 63, 70, 46, 53, 52, 65, 55,
-           162, 21, 54, 103, 67, 109],
+           21, 54, 103, 67, 109],
     desc: 'Rides, tension, hydratation, éclat',
     tips: ['Appliquer sérum en mouvements ascendants', 'Protéger avec un SPF chaque matin', 'Zone la plus exposée au soleil'],
     tutorials: [
