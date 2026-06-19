@@ -13,13 +13,13 @@ const ZONES = [
     name: 'Front',
     icon: '✦',
     color: '#FF9A82',
-    // 389,356 (ear-level right) and 162 (ear-level left) removed — they pulled
-    // the polygon down to ear level, making the forehead look too short.
+    // Top boundary: full hairline arc 109→10→338 spans the forehead width.
+    // Bottom boundary: eyebrow tops. No ear-level landmarks.
     poly: [10, 338, 297, 332, 284, 251,
            300, 293, 334, 296, 336,
            9,
            107, 66, 105, 63, 70, 46, 53, 52, 65, 55,
-           21, 54, 103, 67, 109],
+           54, 103, 67, 109],
     desc: 'Rides, tension, hydratation, éclat',
     tips: ['Appliquer sérum en mouvements ascendants', 'Protéger avec un SPF chaque matin', 'Zone la plus exposée au soleil'],
     tutorials: [
@@ -196,16 +196,13 @@ const ZONES = [
     ],
   },
 
-  // ── JOUE DROITE (user right) — between cheekbone and jaw, nose to ear ────────
-  // Bounded: top=cheekbone(130,247), inner=cheek-nose boundary(129,203,206,216,212),
-  // bottom=jaw(58,172,136), outer=silhouette(93,234)
-  // Does NOT overlap nose wing — stops at 129/203 (inner cheek near nose)
+  // ── JOUE DROITE (user right) ─────────────────────────────────────────────────
   {
     id: 'right_cheek',
     name: 'Joue droite',
     icon: '🌸',
     color: '#FF8CC8',
-    poly: [234, 93, 132, 58, 172, 136, 212, 216, 206, 203, 129, 142, 126, 217, 114, 128, 130, 247, 30, 29, 27, 56, 190],
+    poly: [234, 93, 132, 58, 172, 136, 150, 61, 130, 247, 30, 29, 27, 56, 190],
     desc: 'Blush, contouring, hydratation, drainage lymphatique',
     tips: ['Sourire pour trouver la zone du blush', 'Massage drainant vers les oreilles', 'Hydrater matin et soir'],
     tutorials: [
@@ -214,13 +211,13 @@ const ZONES = [
     ],
   },
 
-  // ── JOUE GAUCHE (user left) ──────────────────────────────────────────────────
+  // ── JOUE GAUCHE (user left) — mirror of right_cheek, no duplicate landmarks ──
   {
     id: 'left_cheek',
     name: 'Joue gauche',
     icon: '🌸',
     color: '#FF8CC8',
-    poly: [454, 323, 361, 288, 326, 2, 393, 432, 436, 426, 358, 279, 294, 326, 2, 275, 281, 357, 359, 467, 260, 259, 257, 286, 414, 454],
+    poly: [454, 323, 361, 288, 397, 365, 379, 291, 359, 467, 260, 259, 257, 286, 414],
     desc: 'Blush, contouring, hydratation, drainage lymphatique',
     tips: ['Sourire pour trouver la zone du blush', 'Massage drainant vers les oreilles'],
     tutorials: [
@@ -273,13 +270,13 @@ const ZONES = [
     ],
   },
 
-  // ── AILE GAUCHE (user left, MP right nostril) ────────────────────────────────
+  // ── AILE GAUCHE (user left, MP right nostril) — mirror of right_nostril ──────
   {
     id: 'left_nostril',
     name: 'Aile gauche du nez',
     icon: '◉',
     color: '#FFBA50',
-    poly: [279, 294, 327, 328, 290, 305, 460, 344, 440, 275, 4],
+    poly: [279, 294, 326, 290, 305, 460, 344, 440, 275, 4],
     desc: 'Points noirs, pores, soin purifiant',
     tips: ['Patch purifiant 1×/semaine', 'Ne jamais presser à mains nues'],
     tutorials: [

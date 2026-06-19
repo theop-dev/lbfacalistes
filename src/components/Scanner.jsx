@@ -80,8 +80,9 @@ export default function Scanner({ onBack, onConfirm }) {
       ctx.fill();
     }
 
-    // 2. Zone polygons
-    for (const zone of ZONES) {
+    // 2. Zone polygons — draw large zones first so small ones render on top
+    const sortedZones = [...ZONES].sort((a, b) => b.poly.length - a.poly.length);
+    for (const zone of sortedZones) {
       const pts = getPolyPts(zone, lm, w, h);
       if (pts.length < 3) continue;
 
