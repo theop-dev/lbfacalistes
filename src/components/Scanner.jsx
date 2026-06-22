@@ -124,8 +124,8 @@ export default function Scanner({ onBack, onConfirm }) {
         ctx.fill();
       }
 
-      ctx.strokeStyle = active ? hexRgba(zone.color, 1) : hexRgba(zone.color, 0.55);
-      ctx.lineWidth   = active ? 2.5 : 1.2;
+      ctx.strokeStyle = active ? hexRgba(zone.color, 1) : hexRgba(zone.color, 0.35);
+      ctx.lineWidth   = active ? 2.5 : 0.9;
 
       ctx.beginPath();
       ctx.moveTo(pts[0].x, pts[0].y);

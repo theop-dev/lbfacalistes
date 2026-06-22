@@ -142,13 +142,14 @@ const ZONES = [
   },
 
   // ── TEMPE DROITE (user right, lateral face strip from outer eye to jaw) ───────
+  // Strictly outer lateral face — no shared landmarks with cheek/jaw/cheekbone.
   {
     id: 'right_temple',
     name: 'Tempe droite',
     icon: '◉',
     color: '#FF6060',
     sortByAngle: true,
-    poly: [21, 162, 127, 234, 93, 132, 116, 117, 118, 119, 120, 121, 54, 103, 67, 109],
+    poly: [21, 162, 127, 234, 54, 103, 67, 109],
     desc: 'Zone temporale, migraines, détente, réflexologie',
     tips: ['Point de pression anti-migraine sur la tempe', 'Massage circulaire doux pour relâcher les tensions', 'Zone très sensible — pression légère uniquement'],
     tutorials: [
@@ -164,7 +165,7 @@ const ZONES = [
     icon: '◉',
     color: '#FF6060',
     sortByAngle: true,
-    poly: [251, 389, 356, 454, 323, 361, 345, 346, 347, 348, 349, 350, 284, 332, 297, 338],
+    poly: [251, 389, 356, 454, 284, 332, 297, 338],
     desc: 'Zone temporale, migraines, détente, réflexologie',
     tips: ['Point de pression anti-migraine sur la tempe', 'Massage circulaire doux pour relâcher les tensions'],
     tutorials: [
@@ -173,14 +174,15 @@ const ZONES = [
     ],
   },
 
-  // ── POMMETTE DROITE (user right, high-cheekbone under right eye) ─────────────
+  // ── POMMETTE DROITE (user right, outer cheekbone under right eye) ────────────
+  // Outer sub-orbital area only — no shared landmarks with cheek or undereye.
   {
     id: 'right_cheekbone',
     name: 'Pommette droite',
     icon: '✧',
     color: '#FFAAD2',
     sortByAngle: true,
-    poly: [247, 30, 29, 27, 28, 56, 190, 207, 206, 147, 123, 116, 143, 111],
+    poly: [247, 30, 29, 27, 28, 56, 190, 120, 121, 119, 118],
     desc: 'Highlighter, sculpture, blush',
     tips: ['Highlighter sur le point le plus haut de la pommette', 'Sourire pour trouver l\'emplacement exact du blush'],
     tutorials: [
@@ -189,14 +191,14 @@ const ZONES = [
     ],
   },
 
-  // ── POMMETTE GAUCHE (user left, high-cheekbone under left eye) ───────────────
+  // ── POMMETTE GAUCHE (user left, outer cheekbone under left eye) ──────────────
   {
     id: 'left_cheekbone',
     name: 'Pommette gauche',
     icon: '✧',
     color: '#FFAAD2',
     sortByAngle: true,
-    poly: [467, 260, 259, 257, 258, 286, 414, 427, 426, 376, 352, 345, 372, 340],
+    poly: [467, 260, 259, 257, 258, 286, 414, 349, 350, 348, 347],
     desc: 'Highlighter, sculpture, blush',
     tips: ['Highlighter sur le point le plus haut de la pommette', 'Sourire pour trouver l\'emplacement exact du blush'],
     tutorials: [
@@ -206,15 +208,14 @@ const ZONES = [
   },
 
   // ── JOUE DROITE (user right) ─────────────────────────────────────────────────
-  // Removed landmarks 130 (near inner eye) and 247 (outer eye corner) which were
-  // causing lines to jump up to the eye level and cross the polygon.
+  // Middle cheek only — no shared landmarks with jaw, temple, or cheekbone.
   {
     id: 'right_cheek',
     name: 'Joue droite',
     icon: '🌸',
     color: '#FF8CC8',
     sortByAngle: true,
-    poly: [234, 93, 132, 58, 172, 136, 150, 61, 92, 206, 207, 147, 123, 116, 143, 111],
+    poly: [92, 165, 206, 207, 147, 116, 123, 143, 111],
     desc: 'Blush, contouring, hydratation, drainage lymphatique',
     tips: ['Sourire pour trouver la zone du blush', 'Massage drainant vers les oreilles', 'Hydrater matin et soir'],
     tutorials: [
@@ -224,14 +225,13 @@ const ZONES = [
   },
 
   // ── JOUE GAUCHE (user left) — mirror of right_cheek ─────────────────────────
-  // Removed landmarks 359 (near inner eye) and 467 (outer eye corner) — same fix.
   {
     id: 'left_cheek',
     name: 'Joue gauche',
     icon: '🌸',
     color: '#FF8CC8',
     sortByAngle: true,
-    poly: [454, 323, 361, 288, 397, 365, 379, 291, 322, 426, 427, 376, 352, 345, 372, 340],
+    poly: [322, 391, 426, 427, 376, 345, 352, 372, 340],
     desc: 'Blush, contouring, hydratation, drainage lymphatique',
     tips: ['Sourire pour trouver la zone du blush', 'Massage drainant vers les oreilles'],
     tutorials: [
@@ -365,13 +365,14 @@ const ZONES = [
   },
 
   // ── MÂCHOIRE DROITE (user right) ─────────────────────────────────────────────
+  // Strictly outer jaw silhouette — no shared landmarks with cheek or chin.
   {
     id: 'right_jaw',
     name: 'Mâchoire droite',
     icon: '◁',
     color: '#9682FF',
     sortByAngle: true,
-    poly: [234, 93, 132, 58, 172, 136, 150, 149, 61],
+    poly: [234, 93, 132, 58, 172, 136, 150, 149],
     desc: 'Masséter, jawline, contouring, détente musculaire',
     tips: ['Massage du masséter pour relâcher les tensions', 'Zone clé pour les serrements de mâchoire (bruxisme)'],
     tutorials: [
@@ -387,7 +388,7 @@ const ZONES = [
     icon: '▷',
     color: '#9682FF',
     sortByAngle: true,
-    poly: [454, 323, 361, 288, 397, 365, 379, 378, 291],
+    poly: [454, 323, 361, 288, 397, 365, 379, 378],
     desc: 'Masséter, jawline, contouring, détente musculaire',
     tips: ['Massage du masséter pour relâcher les tensions', 'Zone clé pour les serrements de mâchoire (bruxisme)'],
     tutorials: [
