@@ -232,3 +232,53 @@ html, body, #root {
   margin-bottom: env(safe-area-inset-bottom, 1rem);
 }
 .btn-rescan:hover { background: rgba(181,123,238,.1); color: var(--text); }
+
+/* ── CAPTURE BUTTON (in scanner bar) ─────────── */
+.btn-capture {
+  background: linear-gradient(135deg, var(--primary), var(--primary2));
+  border: none; color: #fff; padding: .42rem .9rem;
+  border-radius: 8px; font-size: .82rem; font-weight: 600;
+  cursor: pointer; white-space: nowrap; flex-shrink: 0;
+  transition: opacity .2s;
+}
+.btn-capture:hover { opacity: .85; }
+
+/* ── FACEMAP PANEL (slide-up zone info) ─────────── */
+.facemap-panel {
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  padding: 1.1rem 1.1rem calc(1.1rem + env(safe-area-inset-bottom, 0));
+  flex-shrink: 0;
+  animation: slideUp .28s cubic-bezier(.4,0,.2,1);
+  max-height: 42vh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.facemap-header {
+  display: flex; align-items: center; gap: .85rem; margin-bottom: .9rem;
+}
+.facemap-icon { font-size: 1.9rem; flex-shrink: 0; }
+.facemap-meta { flex: 1; min-width: 0; }
+.facemap-name { font-size: 1.05rem; font-weight: 600; }
+.facemap-desc { font-size: .82rem; color: var(--muted); margin-top: .15rem; line-height: 1.4; }
+.facemap-links { display: flex; flex-direction: column; gap: .45rem; margin-bottom: .75rem; }
+.facemap-link {
+  display: flex; align-items: center; gap: .6rem;
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 10px; padding: .65rem .85rem;
+  text-decoration: none; color: var(--text);
+  transition: background .2s, border-color .2s;
+}
+.facemap-link:hover { background: rgba(181,123,238,.08); border-color: rgba(181,123,238,.3); }
+.facemap-link-title { flex: 1; font-size: .82rem; font-weight: 500; line-height: 1.35; }
+.facemap-link-dur { font-size: .74rem; color: var(--muted); white-space: nowrap; }
+.facemap-full-btn { width: 100%; margin-top: 0; }
+
+/* ── CONFIRM BUTTON (reused in FaceMapPage) ──── */
+.btn-confirm {
+  background: linear-gradient(135deg, var(--primary), var(--primary2));
+  border: none; color: #fff; padding: .85rem 1.5rem;
+  border-radius: 12px; font-size: .95rem; font-weight: 600;
+  cursor: pointer; transition: opacity .2s; width: 100%;
+}
+.btn-confirm:hover { opacity: .88; }

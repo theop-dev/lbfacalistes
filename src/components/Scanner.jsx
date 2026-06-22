@@ -61,7 +61,7 @@ function hexRgba(hex, alpha) {
 
 // ── Scanner ───────────────────────────────────────────────────────────────
 
-export default function Scanner({ onBack, onConfirm }) {
+export default function Scanner({ onBack, onConfirm, onCapture }) {
   const videoRef  = useRef(null);
   const canvasRef = useRef(null);
   const animRef   = useRef(null);
@@ -327,6 +327,19 @@ export default function Scanner({ onBack, onConfirm }) {
     if (z) onConfirm(z);
   }, [pendZone, onConfirm, draw]);
 
+  const captureFrame = useCallback(() => {
+    const video = videoRef.current;
+    const lm    = lmRef.current;
+    if (!video || !lm) return;
+    const off = document.createElement('canvas');
+    off.width  = video.videoWidth  || video.clientWidth;
+    off.height = video.videoHeight || video.clientHeight;
+    off.getContext('2d').drawImage(video, 0, 0);
+    const imageData  = off.toDataURL('image/jpeg', 0.9);
+    const landmarks  = Array.from(lm).map(p => ({ x: p.x, y: p.y, z: p.z || 0 }));
+    onCapture({ imageData, landmarks });
+  }, [onCapture]);
+
   const handleBack = useCallback(() => {
     if (animRef.current) cancelAnimationFrame(animRef.current);
     streamRef.current?.getTracks().forEach(t => t.stop());
@@ -339,7 +352,9 @@ export default function Scanner({ onBack, onConfirm }) {
       <div className="scan-bar">
         <button className="btn-back" onClick={handleBack}>← Retour</button>
         <span className="status-msg">{status}</span>
-        {hintVisible && <span className="hint-badge">Touchez une zone</span>}
+        {hintVisible && !pendZone && (
+          <button className="btn-capture" onClick={captureFrame}>📸 Carte</button>
+        )}
       </div>
 
       <div className="cam-wrap">

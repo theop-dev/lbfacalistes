@@ -110,13 +110,15 @@ const ZONES = [
   },
 
   // ── CERNE DROIT (user right, under MP left eye) ──────────────────────────────
+  // Sub-orbital ONLY — no upper eyelid landmarks (those caused a huge polygon
+  // wrapping the entire eye area when convex hull was applied).
   {
     id: 'right_undereye',
     name: 'Cerne droit',
     icon: '◔',
     color: '#96E6FF',
     sortByAngle: true,
-    poly: [33, 7, 163, 144, 145, 153, 154, 155, 133, 243, 112, 26, 22, 23, 24, 110, 25, 130],
+    poly: [243, 112, 26, 22, 23, 24, 110, 25, 130, 120, 121, 119, 118, 117],
     desc: 'Cernes, poches, anti-fatigue, contour des yeux',
     tips: ['Tapoter — ne jamais frotter', 'Crème contour des yeux matin et soir'],
     tutorials: [
@@ -132,7 +134,7 @@ const ZONES = [
     icon: '◔',
     color: '#96E6FF',
     sortByAngle: true,
-    poly: [263, 249, 390, 373, 374, 380, 381, 382, 362, 463, 341, 256, 252, 253, 254, 339, 255, 359],
+    poly: [463, 341, 256, 252, 253, 254, 339, 255, 359, 349, 350, 348, 347, 346],
     desc: 'Cernes, poches, anti-fatigue, contour des yeux',
     tips: ['Tapoter — ne jamais frotter', 'Crème contour des yeux matin et soir'],
     tutorials: [
