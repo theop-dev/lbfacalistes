@@ -4,6 +4,9 @@
 //   LEFT side (user RIGHT, MP low-x): 148,176,149,150,136,172,58,132,93 → ear 234,127,162,21,54,103,67,109 → top
 //
 // Canvas is CSS scaleX(-1). MP "left" (low x) = user RIGHT on screen.
+// sortByAngle: true — vertices are automatically sorted by angle around centroid
+//   before drawing, preventing self-intersecting polygons. Use for all roughly
+//   convex/star-shaped zones. Do NOT use for eyes or lips (concave MediaPipe paths).
 
 const ZONES = [
 
@@ -13,8 +16,7 @@ const ZONES = [
     name: 'Front',
     icon: '✦',
     color: '#FF9A82',
-    // Top boundary: full hairline arc 109→10→338 spans the forehead width.
-    // Bottom boundary: eyebrow tops. No ear-level landmarks.
+    sortByAngle: true,
     poly: [10, 338, 297, 332, 284, 251,
            300, 293, 334, 296, 336,
            9,
@@ -34,6 +36,7 @@ const ZONES = [
     name: 'Glabelle',
     icon: '◈',
     color: '#FFD45A',
+    sortByAngle: true,
     poly: [9, 107, 66, 105, 63, 70, 46, 53, 52, 65, 55,
            285, 295, 282, 283, 276, 300, 293, 334, 296, 336],
     desc: 'Ride du lion, point de pression, réflexologie',
@@ -50,6 +53,7 @@ const ZONES = [
     name: 'Sourcil droit',
     icon: '〰',
     color: '#C88CFF',
+    sortByAngle: true,
     poly: [46, 53, 52, 65, 55, 107, 66, 105, 63, 70],
     desc: 'Architecture, dessin, densification',
     tips: ['Brosser dans le sens du poil', 'Dessiner poil par poil pour un naturel parfait'],
@@ -65,6 +69,7 @@ const ZONES = [
     name: 'Sourcil gauche',
     icon: '〰',
     color: '#C88CFF',
+    sortByAngle: true,
     poly: [276, 283, 282, 295, 285, 336, 296, 334, 293, 300],
     desc: 'Architecture, dessin, densification',
     tips: ['Brosser dans le sens du poil', 'Dessiner poil par poil pour un naturel parfait'],
@@ -110,7 +115,8 @@ const ZONES = [
     name: 'Cerne droit',
     icon: '◔',
     color: '#96E6FF',
-    poly: [33, 7, 163, 144, 145, 153, 154, 155, 133, 243, 112, 26, 22, 23, 24, 110, 25, 130],
+    sortByAngle: true,
+    poly: [243, 112, 26, 22, 23, 24, 110, 25, 130, 120, 121, 119, 118, 117, 111, 143, 123, 116],
     desc: 'Cernes, poches, anti-fatigue, contour des yeux',
     tips: ['Tapoter — ne jamais frotter', 'Crème contour des yeux matin et soir'],
     tutorials: [
@@ -125,7 +131,8 @@ const ZONES = [
     name: 'Cerne gauche',
     icon: '◔',
     color: '#96E6FF',
-    poly: [263, 249, 390, 373, 374, 380, 381, 382, 362, 463, 341, 256, 252, 253, 254, 339, 255, 359],
+    sortByAngle: true,
+    poly: [463, 341, 256, 252, 253, 254, 339, 255, 359, 349, 350, 348, 347, 346, 340, 372, 352, 345],
     desc: 'Cernes, poches, anti-fatigue, contour des yeux',
     tips: ['Tapoter — ne jamais frotter', 'Crème contour des yeux matin et soir'],
     tutorials: [
@@ -135,14 +142,13 @@ const ZONES = [
   },
 
   // ── TEMPE DROITE (user right, lateral face strip from outer eye to jaw) ───────
-  // Outer edge: face silhouette 21→162→127→234. Inner: cheekbone area.
-  // Does NOT touch forehead or eyebrow landmarks.
   {
     id: 'right_temple',
     name: 'Tempe droite',
     icon: '◉',
     color: '#FF6060',
-    poly: [21, 162, 127, 234, 93, 130, 247, 56, 190, 243],
+    sortByAngle: true,
+    poly: [21, 162, 127, 234, 93, 111, 143, 116, 123, 147, 30, 29, 27, 56, 190, 243],
     desc: 'Zone temporale, migraines, détente, réflexologie',
     tips: ['Point de pression anti-migraine sur la tempe', 'Massage circulaire doux pour relâcher les tensions', 'Zone très sensible — pression légère uniquement'],
     tutorials: [
@@ -157,7 +163,8 @@ const ZONES = [
     name: 'Tempe gauche',
     icon: '◉',
     color: '#FF6060',
-    poly: [251, 389, 356, 454, 323, 359, 467, 286, 414, 463],
+    sortByAngle: true,
+    poly: [251, 389, 356, 454, 323, 340, 372, 345, 352, 376, 260, 259, 257, 286, 414, 463],
     desc: 'Zone temporale, migraines, détente, réflexologie',
     tips: ['Point de pression anti-migraine sur la tempe', 'Massage circulaire doux pour relâcher les tensions'],
     tutorials: [
@@ -172,6 +179,7 @@ const ZONES = [
     name: 'Pommette droite',
     icon: '✧',
     color: '#FFAAD2',
+    sortByAngle: true,
     poly: [130, 247, 30, 29, 27, 28, 56, 190, 243, 112, 26, 22, 23, 24, 25, 110],
     desc: 'Highlighter, sculpture, blush',
     tips: ['Highlighter sur le point le plus haut de la pommette', 'Sourire pour trouver l\'emplacement exact du blush'],
@@ -187,6 +195,7 @@ const ZONES = [
     name: 'Pommette gauche',
     icon: '✧',
     color: '#FFAAD2',
+    sortByAngle: true,
     poly: [359, 467, 260, 259, 257, 258, 286, 414, 463, 341, 256, 252, 253, 254, 255, 339],
     desc: 'Highlighter, sculpture, blush',
     tips: ['Highlighter sur le point le plus haut de la pommette', 'Sourire pour trouver l\'emplacement exact du blush'],
@@ -197,12 +206,15 @@ const ZONES = [
   },
 
   // ── JOUE DROITE (user right) ─────────────────────────────────────────────────
+  // Removed landmarks 130 (near inner eye) and 247 (outer eye corner) which were
+  // causing lines to jump up to the eye level and cross the polygon.
   {
     id: 'right_cheek',
     name: 'Joue droite',
     icon: '🌸',
     color: '#FF8CC8',
-    poly: [234, 93, 132, 58, 172, 136, 150, 61, 130, 247, 30, 29, 27, 56, 190],
+    sortByAngle: true,
+    poly: [234, 93, 132, 58, 172, 136, 150, 61, 92, 206, 207, 147, 123, 116, 143, 111],
     desc: 'Blush, contouring, hydratation, drainage lymphatique',
     tips: ['Sourire pour trouver la zone du blush', 'Massage drainant vers les oreilles', 'Hydrater matin et soir'],
     tutorials: [
@@ -211,13 +223,15 @@ const ZONES = [
     ],
   },
 
-  // ── JOUE GAUCHE (user left) — mirror of right_cheek, no duplicate landmarks ──
+  // ── JOUE GAUCHE (user left) — mirror of right_cheek ─────────────────────────
+  // Removed landmarks 359 (near inner eye) and 467 (outer eye corner) — same fix.
   {
     id: 'left_cheek',
     name: 'Joue gauche',
     icon: '🌸',
     color: '#FF8CC8',
-    poly: [454, 323, 361, 288, 397, 365, 379, 291, 359, 467, 260, 259, 257, 286, 414],
+    sortByAngle: true,
+    poly: [454, 323, 361, 288, 397, 365, 379, 291, 322, 426, 427, 376, 352, 345, 372, 340],
     desc: 'Blush, contouring, hydratation, drainage lymphatique',
     tips: ['Sourire pour trouver la zone du blush', 'Massage drainant vers les oreilles'],
     tutorials: [
@@ -227,12 +241,16 @@ const ZONES = [
   },
 
   // ── ARÊTE DU NEZ (nose bridge) ───────────────────────────────────────────────
+  // Old polygon had landmarks 429,358,327,326 which are nasolabial/cheek area —
+  // they were pulling the polygon far out to the sides. Replaced with correct
+  // symmetric nose-dorsum landmarks only.
   {
     id: 'nose_bridge',
     name: 'Arête du nez',
     icon: '◈',
     color: '#FFE87A',
-    poly: [168, 193, 122, 196, 3, 51, 45, 4, 275, 281, 248, 456, 420, 429, 358, 327, 326],
+    sortByAngle: true,
+    poly: [168, 417, 351, 419, 248, 281, 275, 4, 45, 51, 3, 196, 122, 193],
     desc: 'Contouring, highlighter, arête, affinement',
     tips: ['Highlighter fin sur l\'arête pour l\'élever', 'Contouring sur les côtés pour affiner'],
     tutorials: [
@@ -247,6 +265,7 @@ const ZONES = [
     name: 'Pointe du nez',
     icon: '◉',
     color: '#FFD45A',
+    sortByAngle: true,
     poly: [4, 45, 220, 115, 49, 64, 294, 279, 344, 440, 275],
     desc: 'Pointe, pores, soin purifiant',
     tips: ['Nettoyer les pores régulièrement', 'Exfoliant doux 2×/semaine'],
@@ -262,7 +281,7 @@ const ZONES = [
     name: 'Aile droite du nez',
     icon: '◉',
     color: '#FFBA50',
-    poly: [49, 64, 98, 99, 60, 75, 240, 115, 220, 45, 4],
+    poly: [49, 64, 98, 97, 99, 60, 75, 240, 115, 220, 45],
     desc: 'Points noirs, pores, soin purifiant',
     tips: ['Patch purifiant 1×/semaine', 'Ne jamais presser à mains nues'],
     tutorials: [
@@ -270,13 +289,13 @@ const ZONES = [
     ],
   },
 
-  // ── AILE GAUCHE (user left, MP right nostril) — mirror of right_nostril ──────
+  // ── AILE GAUCHE (user left, MP right nostril) ────────────────────────────────
   {
     id: 'left_nostril',
     name: 'Aile gauche du nez',
     icon: '◉',
     color: '#FFBA50',
-    poly: [279, 294, 326, 290, 305, 460, 344, 440, 275, 4],
+    poly: [279, 294, 328, 327, 290, 305, 460, 344, 440, 275],
     desc: 'Points noirs, pores, soin purifiant',
     tips: ['Patch purifiant 1×/semaine', 'Ne jamais presser à mains nues'],
     tutorials: [
@@ -285,7 +304,6 @@ const ZONES = [
   },
 
   // ── PHILTRUM (entre base du nez et lèvre sup) ────────────────────────────────
-  // Simple 5-point polygon: nose-base → cupid's-bow peaks → center dip
   {
     id: 'philtrum',
     name: 'Philtrum',
@@ -330,16 +348,13 @@ const ZONES = [
     ],
   },
 
-  // ── MENTON (chin only — starts BELOW the lower lip outer edge) ───────────────
-  // 17=lip-bottom-center, 91=left-below-mouth, 176=chin-left-silhouette,
-  // 148=chin-bottom-left, 152=chin-tip, 377=chin-bottom-right,
-  // 400=chin-right-silhouette, 321=right-below-mouth
-  // No lip landmarks (84,181,314,405 removed)
+  // ── MENTON ───────────────────────────────────────────────────────────────────
   {
     id: 'chin',
     name: 'Menton',
     icon: '◇',
     color: '#A882FF',
+    sortByAngle: true,
     poly: [17, 91, 176, 148, 152, 377, 400, 321],
     desc: 'Contouring, affinement, définition, soin',
     tips: ['Contouring sous le menton affine le visage', 'Hydrater — zone souvent sèche'],
@@ -349,14 +364,13 @@ const ZONES = [
     ],
   },
 
-  // ── MÂCHOIRE DROITE (user right) — ONLY lower-left silhouette, ear→chin ──────
-  // Landmarks: 234(ear) → 93 → 132 → 58 → 172 → 136 → 150 → 149 → mouth-corner(61)
-  // Does NOT include temple (162,21,54,103,67,109) or eyebrow (46,53,52,65,55) landmarks
+  // ── MÂCHOIRE DROITE (user right) ─────────────────────────────────────────────
   {
     id: 'right_jaw',
     name: 'Mâchoire droite',
     icon: '◁',
     color: '#9682FF',
+    sortByAngle: true,
     poly: [234, 93, 132, 58, 172, 136, 150, 149, 61],
     desc: 'Masséter, jawline, contouring, détente musculaire',
     tips: ['Massage du masséter pour relâcher les tensions', 'Zone clé pour les serrements de mâchoire (bruxisme)'],
@@ -366,14 +380,13 @@ const ZONES = [
     ],
   },
 
-  // ── MÂCHOIRE GAUCHE (user left) — ONLY lower-right silhouette, ear→chin ──────
-  // Landmarks: 454(ear) → 323 → 361 → 288 → 397 → 365 → 379 → 378 → mouth-corner(291)
-  // Does NOT include temple (356,389,251,284,332,297,338) or eyebrow (276..300) landmarks
+  // ── MÂCHOIRE GAUCHE (user left) ──────────────────────────────────────────────
   {
     id: 'left_jaw',
     name: 'Mâchoire gauche',
     icon: '▷',
     color: '#9682FF',
+    sortByAngle: true,
     poly: [454, 323, 361, 288, 397, 365, 379, 378, 291],
     desc: 'Masséter, jawline, contouring, détente musculaire',
     tips: ['Massage du masséter pour relâcher les tensions', 'Zone clé pour les serrements de mâchoire (bruxisme)'],

@@ -28,7 +28,13 @@ function inPoly(px, py, pts) {
 }
 
 function getPolyPts(zone, lm, w, h) {
-  return zone.poly.map(i => ({ x: lm[i].x * w, y: lm[i].y * h }));
+  const pts = zone.poly.map(i => ({ x: lm[i].x * w, y: lm[i].y * h }));
+  if (zone.sortByAngle) {
+    const cx = pts.reduce((s, p) => s + p.x, 0) / pts.length;
+    const cy = pts.reduce((s, p) => s + p.y, 0) / pts.length;
+    pts.sort((a, b) => Math.atan2(a.y - cy, a.x - cx) - Math.atan2(b.y - cy, b.x - cx));
+  }
+  return pts;
 }
 
 // Hex color to rgba
