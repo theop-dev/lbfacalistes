@@ -116,7 +116,7 @@ const ZONES = [
     icon: '◔',
     color: '#96E6FF',
     sortByAngle: true,
-    poly: [243, 112, 26, 22, 23, 24, 110, 25, 130, 120, 121, 119, 118, 117, 111, 143, 123, 116],
+    poly: [33, 7, 163, 144, 145, 153, 154, 155, 133, 243, 112, 26, 22, 23, 24, 110, 25, 130],
     desc: 'Cernes, poches, anti-fatigue, contour des yeux',
     tips: ['Tapoter — ne jamais frotter', 'Crème contour des yeux matin et soir'],
     tutorials: [
@@ -132,7 +132,7 @@ const ZONES = [
     icon: '◔',
     color: '#96E6FF',
     sortByAngle: true,
-    poly: [463, 341, 256, 252, 253, 254, 339, 255, 359, 349, 350, 348, 347, 346, 340, 372, 352, 345],
+    poly: [263, 249, 390, 373, 374, 380, 381, 382, 362, 463, 341, 256, 252, 253, 254, 339, 255, 359],
     desc: 'Cernes, poches, anti-fatigue, contour des yeux',
     tips: ['Tapoter — ne jamais frotter', 'Crème contour des yeux matin et soir'],
     tutorials: [
@@ -148,7 +148,7 @@ const ZONES = [
     icon: '◉',
     color: '#FF6060',
     sortByAngle: true,
-    poly: [21, 162, 127, 234, 93, 111, 143, 116, 123, 147, 30, 29, 27, 56, 190, 243],
+    poly: [21, 162, 127, 234, 93, 132, 116, 117, 118, 119, 120, 121, 54, 103, 67, 109],
     desc: 'Zone temporale, migraines, détente, réflexologie',
     tips: ['Point de pression anti-migraine sur la tempe', 'Massage circulaire doux pour relâcher les tensions', 'Zone très sensible — pression légère uniquement'],
     tutorials: [
@@ -164,7 +164,7 @@ const ZONES = [
     icon: '◉',
     color: '#FF6060',
     sortByAngle: true,
-    poly: [251, 389, 356, 454, 323, 340, 372, 345, 352, 376, 260, 259, 257, 286, 414, 463],
+    poly: [251, 389, 356, 454, 323, 361, 345, 346, 347, 348, 349, 350, 284, 332, 297, 338],
     desc: 'Zone temporale, migraines, détente, réflexologie',
     tips: ['Point de pression anti-migraine sur la tempe', 'Massage circulaire doux pour relâcher les tensions'],
     tutorials: [
@@ -180,7 +180,7 @@ const ZONES = [
     icon: '✧',
     color: '#FFAAD2',
     sortByAngle: true,
-    poly: [130, 247, 30, 29, 27, 28, 56, 190, 243, 112, 26, 22, 23, 24, 25, 110],
+    poly: [247, 30, 29, 27, 28, 56, 190, 207, 206, 147, 123, 116, 143, 111],
     desc: 'Highlighter, sculpture, blush',
     tips: ['Highlighter sur le point le plus haut de la pommette', 'Sourire pour trouver l\'emplacement exact du blush'],
     tutorials: [
@@ -196,7 +196,7 @@ const ZONES = [
     icon: '✧',
     color: '#FFAAD2',
     sortByAngle: true,
-    poly: [359, 467, 260, 259, 257, 258, 286, 414, 463, 341, 256, 252, 253, 254, 255, 339],
+    poly: [467, 260, 259, 257, 258, 286, 414, 427, 426, 376, 352, 345, 372, 340],
     desc: 'Highlighter, sculpture, blush',
     tips: ['Highlighter sur le point le plus haut de la pommette', 'Sourire pour trouver l\'emplacement exact du blush'],
     tutorials: [

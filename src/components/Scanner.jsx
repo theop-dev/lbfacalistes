@@ -27,14 +27,28 @@ function inPoly(px, py, pts) {
   return inside;
 }
 
+// Convex hull via Andrew's monotone chain — always non-self-intersecting
+function convexHull(pts) {
+  if (pts.length < 3) return pts;
+  const s = [...pts].sort((a, b) => a.x !== b.x ? a.x - b.x : a.y - b.y);
+  const cross = (o, a, b) => (a.x - o.x) * (b.y - o.y) - (a.y - o.y) * (b.x - o.x);
+  const lo = [], hi = [];
+  for (const p of s) {
+    while (lo.length >= 2 && cross(lo[lo.length - 2], lo[lo.length - 1], p) <= 0) lo.pop();
+    lo.push(p);
+  }
+  for (let i = s.length - 1; i >= 0; i--) {
+    const p = s[i];
+    while (hi.length >= 2 && cross(hi[hi.length - 2], hi[hi.length - 1], p) <= 0) hi.pop();
+    hi.push(p);
+  }
+  hi.pop(); lo.pop();
+  return lo.concat(hi);
+}
+
 function getPolyPts(zone, lm, w, h) {
   const pts = zone.poly.map(i => ({ x: lm[i].x * w, y: lm[i].y * h }));
-  if (zone.sortByAngle) {
-    const cx = pts.reduce((s, p) => s + p.x, 0) / pts.length;
-    const cy = pts.reduce((s, p) => s + p.y, 0) / pts.length;
-    pts.sort((a, b) => Math.atan2(a.y - cy, a.x - cx) - Math.atan2(b.y - cy, b.x - cx));
-  }
-  return pts;
+  return zone.sortByAngle ? convexHull(pts) : pts;
 }
 
 // Hex color to rgba
