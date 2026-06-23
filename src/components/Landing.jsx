@@ -19,11 +19,6 @@ export default function Landing({ onStart }) {
           Commencer l&apos;analyse
         </button>
 
-        <div className="badges">
-          <span className="badge">📱 Mobile &amp; PC</span>
-          <span className="badge">🔒 100 % privé</span>
-          <span className="badge">🤖 IA Google</span>
-        </div>
       </div>
     </div>
   );
