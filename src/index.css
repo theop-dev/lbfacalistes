@@ -186,54 +186,102 @@ html, body, #root {
 .tuto-header-dot { width: 14px; height: 14px; border-radius: 50%; flex-shrink: 0; }
 .tuto-header-name { font-size: .95rem; font-weight: 600; }
 
-.tuto-body { flex: 1; overflow-y: auto; padding: 1.2rem; overscroll-behavior: contain; }
+.tuto-body { flex: 1; overflow-y: auto; padding: 1.1rem; overscroll-behavior: contain; display: flex; flex-direction: column; gap: 1.1rem; }
 
-.tuto-zone-card {
+/* Hero */
+.tuto-hero {
+  border-radius: 20px; padding: 1.6rem 1.4rem;
+  background:
+    radial-gradient(ellipse 120% 80% at 10% -10%, rgba(var(--zone-rgb),0.22) 0%, transparent 60%),
+    radial-gradient(ellipse 80% 60% at 90% 110%, rgba(var(--zone-rgb),0.12) 0%, transparent 55%),
+    var(--surface);
+  border: 1px solid rgba(var(--zone-rgb),0.25);
+}
+.tuto-hero-title { font-size: 1.55rem; font-weight: 700; margin-bottom: .45rem; }
+.tuto-hero-desc { font-size: .9rem; color: var(--muted); line-height: 1.55; }
+
+/* Stats bar */
+.tuto-stats {
+  display: flex; align-items: center; justify-content: center; gap: 0;
   background: var(--surface); border: 1px solid var(--border);
-  border-radius: 16px; padding: 1.3rem; margin-bottom: 1.4rem;
+  border-radius: 14px; overflow: hidden;
 }
-.tuto-zone-hero { display: flex; align-items: flex-start; gap: 1rem; margin-bottom: 1rem; }
-.tuto-zone-color-bar {
-  width: 6px; min-height: 52px; border-radius: 3px; flex-shrink: 0; align-self: stretch;
+.tuto-stat {
+  flex: 1; display: flex; flex-direction: column; align-items: center;
+  padding: .8rem .5rem;
 }
-.tuto-zone-title { font-size: 1.2rem; font-weight: 600; margin-bottom: .3rem; }
-.tuto-zone-desc { font-size: .85rem; color: var(--muted); line-height: 1.5; }
+.tuto-stat-value { font-size: 1.15rem; font-weight: 700; line-height: 1.1; }
+.tuto-stat-label { font-size: .68rem; color: var(--muted); margin-top: .15rem; text-transform: uppercase; letter-spacing: .06em; }
+.tuto-stat-sep { width: 1px; height: 32px; background: var(--border); flex-shrink: 0; }
 
-.tuto-tips { margin-top: .8rem; padding-top: .8rem; border-top: 1px solid var(--border); }
-.tuto-tips-label { font-size: .75rem; letter-spacing: .1em; text-transform: uppercase; color: var(--primary); margin-bottom: .6rem; font-weight: 500; }
-.tuto-tips-list { padding-left: 1.1rem; }
-.tuto-tips-list li { font-size: .85rem; color: var(--muted); line-height: 1.6; margin-bottom: .25rem; }
+/* Section label */
+.tuto-section-label {
+  font-size: .72rem; letter-spacing: .14em; text-transform: uppercase;
+  color: var(--muted); font-weight: 600; padding-left: .1rem;
+}
 
-.tuto-section-label { font-size: .75rem; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin-bottom: .8rem; font-weight: 500; }
-
+/* Tutorial cards */
 .tuto-grid {
-  display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap: .75rem; margin-bottom: 1.4rem;
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(175px, 1fr));
+  gap: .75rem;
 }
 .tuto-card {
   background: var(--surface); border: 1px solid var(--border);
-  border-radius: 12px; overflow: hidden; text-decoration: none; color: var(--text);
-  display: block; transition: background .2s, border-color .2s, transform .2s;
+  border-radius: 14px; overflow: hidden; text-decoration: none; color: var(--text);
+  display: block; transition: transform .2s, border-color .2s, box-shadow .2s;
 }
-.tuto-card:hover { background: rgba(181,123,238,.08); border-color: rgba(181,123,238,.3); transform: translateY(-2px); }
+.tuto-card:hover {
+  transform: translateY(-3px);
+  border-color: rgba(var(--zone-rgb,181,123,238),.4);
+  box-shadow: 0 8px 28px rgba(var(--zone-rgb,181,123,238),.15);
+}
 .tuto-card:active { transform: translateY(0); }
 .tuto-card-thumb {
-  width: 100%; aspect-ratio: 16/9; background: var(--surface2);
+  width: 100%; aspect-ratio: 16/9;
+  background: linear-gradient(135deg,
+    rgba(var(--zone-rgb,181,123,238),.14),
+    rgba(var(--zone-rgb,181,123,238),.04)
+  );
   display: flex; align-items: center; justify-content: center;
 }
 .tuto-card-body { padding: .75rem; }
-.tuto-card-title { font-size: .82rem; font-weight: 500; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-.tuto-card-meta { font-size: .72rem; color: var(--muted); margin-top: .4rem; display: flex; gap: .4rem; align-items: center; }
+.tuto-card-title { font-size: .82rem; font-weight: 500; line-height: 1.45;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.tuto-card-meta { font-size: .72rem; color: var(--muted); margin-top: .5rem; display: flex; gap: .4rem; align-items: center; }
 .tuto-yt-badge { background: rgba(255,0,0,.12); border: 1px solid rgba(255,0,0,.2); color: #f87171; padding: .12rem .45rem; border-radius: 4px; font-size: .68rem; font-weight: 600; }
 
+/* Community */
+.tuto-community { display: flex; flex-direction: column; gap: .65rem; }
+.tuto-community-item {
+  display: flex; align-items: flex-start; gap: .9rem;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 14px; padding: 1rem 1rem;
+  transition: border-color .2s;
+}
+.tuto-community-item:hover { border-color: rgba(var(--zone-rgb,181,123,238),.25); }
+.tuto-avatar {
+  width: 38px; height: 38px; border-radius: 50%; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: .75rem; font-weight: 700; color: #fff;
+  background: linear-gradient(135deg,
+    rgba(var(--zone-rgb,181,123,238),.85),
+    rgba(var(--zone-rgb,181,123,238),.4)
+  );
+  border: 1.5px solid rgba(var(--zone-rgb,181,123,238),.35);
+}
+.tuto-community-content { flex: 1; min-width: 0; }
+.tuto-community-tip { font-size: .85rem; line-height: 1.5; margin-bottom: .3rem; font-style: italic; }
+.tuto-community-author { font-size: .72rem; color: var(--muted); }
+
+/* Back CTA */
 .btn-rescan {
   display: block; width: 100%; padding: .9rem;
-  background: rgba(255,255,255,.05); border: 1px solid var(--border);
-  border-radius: 12px; color: var(--muted); font-size: .9rem;
+  background: rgba(255,255,255,.04); border: 1px solid var(--border);
+  border-radius: 12px; color: var(--muted); font-size: .88rem;
   cursor: pointer; transition: background .2s, color .2s; text-align: center;
-  margin-bottom: env(safe-area-inset-bottom, 1rem);
+  margin-bottom: env(safe-area-inset-bottom, .5rem);
 }
-.btn-rescan:hover { background: rgba(181,123,238,.1); color: var(--text); }
+.btn-rescan:hover { background: rgba(var(--primary-rgb,181,123,238),.08); color: var(--text); }
 
 /* ── MODE SELECT PAGE ────────────────────────── */
 .mode-select-page {
