@@ -12,7 +12,7 @@ export default function Landing({ onStart }) {
 
         <p>
           Sélectionnez une zone de votre visage et découvrez
-          les tutoriels beauté adaptés — sur mobile et PC.
+          les tutoriels beauté adaptés.
         </p>
 
         <button className="btn-start" onClick={onStart}>

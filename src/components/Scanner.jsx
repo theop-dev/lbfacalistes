@@ -348,6 +348,10 @@ export default function Scanner({ onBack, onConfirm, onCapture }) {
           <div className={`face-alert ${faceAlert.type}`}>{faceAlert.msg}</div>
         )}
 
+        {hintVisible && !pendZone && (
+          <div className="scan-face-hint">Touchez la partie qui vous intéresse</div>
+        )}
+
         <ConfirmDialog zone={pendZone} onConfirm={confirmZone} onCancel={cancelPending} />
       </div>
     </div>
