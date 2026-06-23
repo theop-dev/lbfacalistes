@@ -363,6 +363,26 @@ html, body, #root {
 .facemap-link-dur { font-size: .74rem; color: var(--muted); white-space: nowrap; }
 .facemap-full-btn { width: 100%; margin-top: 0; }
 
+/* ── ZONE GUIDE PANEL (guided mode zone list) ── */
+.zone-guide-panel {
+  background: var(--surface); border-top: 1px solid var(--border);
+  padding: .75rem 1rem calc(.75rem + env(safe-area-inset-bottom, 0));
+  flex-shrink: 0; overflow-y: auto; max-height: 46vh;
+  overscroll-behavior: contain;
+}
+.zone-guide-chips {
+  display: flex; flex-wrap: wrap; gap: .4rem;
+}
+.zone-chip {
+  padding: .32rem .75rem; border-radius: 100px;
+  border: 1px solid var(--border);
+  background: rgba(255,255,255,.04);
+  color: var(--muted); font-size: .78rem;
+  cursor: pointer; transition: all .15s; white-space: nowrap;
+}
+.zone-chip:hover { border-color: rgba(255,255,255,.18); color: var(--text); }
+.zone-chip.selected { font-weight: 600; }
+
 /* ── CONFIRM BUTTON (reused in FaceMapPage) ──── */
 .btn-confirm {
   background: linear-gradient(135deg, var(--primary), var(--primary2));

@@ -9,7 +9,7 @@ function toCanvas(clientX, clientY, canvas) {
   const r = canvas.getBoundingClientRect();
   const rx = (clientX - r.left) * (canvas.width / r.width);
   const ry = (clientY - r.top) * (canvas.height / r.height);
-  return { x: canvas.width - rx, y: ry }; // mirror x for scaleX(-1) canvas
+  return { x: canvas.width - rx, y: ry };
 }
 
 function inPoly(px, py, pts) {
@@ -65,24 +65,23 @@ function hexRgba(hex, alpha) {
 export default function Scanner({ mode = 'tap', onBack, onConfirm, onCapture }) {
   const videoRef  = useRef(null);
   const canvasRef = useRef(null);
-  const camWrapRef = useRef(null);
   const animRef   = useRef(null);
   const streamRef = useRef(null);
   const fmRef     = useRef(null);
   const lmRef     = useRef(null);
   const hovIdRef  = useRef(null);
   const pendIdRef = useRef(null);
+  const guideRef  = useRef(null);
   const faceWas   = useRef(false);
 
   const [loaderText,  setLoaderText]  = useState('Initialisation...');
   const [loading,     setLoading]     = useState(true);
   const [hintVisible, setHintVisible] = useState(false);
-  const [hovZone,     setHovZone]     = useState(null);
   const [pendZone,    setPendZone]    = useState(null);
+  const [guideZone,   setGuideZone]   = useState(null);
   const [faceAlert,   setFaceAlert]   = useState(null);
-  const [zoomStyle,   setZoomStyle]   = useState({});
 
-  // ── Draw ──────────────────────────────────────────────────────────────────
+  // ── Draw — zones are INVISIBLE by default; only active zone is drawn ──────
 
   const draw = useCallback(() => {
     const canvas = canvasRef.current;
@@ -93,22 +92,17 @@ export default function Scanner({ mode = 'tap', onBack, onConfirm, onCapture }) 
     ctx.clearRect(0, 0, w, h);
     if (!lm) return;
 
-    for (let i = 0; i < Math.min(lm.length, 468); i++) {
-      const x = lm[i].x * w, y = lm[i].y * h;
-      ctx.beginPath();
-      ctx.arc(x, y, 1.1, 0, Math.PI * 2);
-      ctx.fillStyle = 'rgba(181,123,238,0.28)';
-      ctx.fill();
-    }
-
+    // Draw all zones but only render the active one
     const sortedZones = [...ZONES].sort((a, b) => b.poly.length - a.poly.length);
     for (const zone of sortedZones) {
+      const isHov   = hovIdRef.current === zone.id;
+      const isPend  = pendIdRef.current === zone.id;
+      const isGuide = guideRef.current?.id === zone.id;
+      const active  = isHov || isPend || isGuide;
+      if (!active) continue; // invisible resting state
+
       const pts = getPolyPts(zone, lm, w, h);
       if (pts.length < 3) continue;
-
-      const isHov  = hovIdRef.current === zone.id;
-      const isPend = pendIdRef.current === zone.id;
-      const active = isHov || isPend;
 
       ctx.save();
       ctx.beginPath();
@@ -116,42 +110,38 @@ export default function Scanner({ mode = 'tap', onBack, onConfirm, onCapture }) 
       for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i].x, pts[i].y);
       ctx.closePath();
 
-      if (active) {
-        ctx.shadowColor = hexRgba(zone.color, 0.9);
-        ctx.shadowBlur  = 20;
-        ctx.fillStyle   = hexRgba(zone.color, 0.38);
-        ctx.fill();
-      }
+      ctx.shadowColor = hexRgba(zone.color, 0.85);
+      ctx.shadowBlur  = 22;
+      ctx.fillStyle   = hexRgba(zone.color, 0.36);
+      ctx.fill();
 
-      ctx.strokeStyle = active ? hexRgba(zone.color, 1) : hexRgba(zone.color, 0.35);
-      ctx.lineWidth   = active ? 2.5 : 0.9;
+      ctx.shadowBlur  = 0;
+      ctx.strokeStyle = hexRgba(zone.color, 1);
+      ctx.lineWidth   = 2.5;
       ctx.beginPath();
       ctx.moveTo(pts[0].x, pts[0].y);
       for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i].x, pts[i].y);
       ctx.closePath();
       ctx.stroke();
 
-      if (active) {
-        const cx = pts.reduce((s, p) => s + p.x, 0) / pts.length;
-        const cy = pts.reduce((s, p) => s + p.y, 0) / pts.length;
-        const label = zone.name;
-        ctx.font = '600 12px -apple-system, sans-serif';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        const tw = ctx.measureText(label).width;
-        const pad = 8;
-        ctx.shadowBlur = 0;
-        ctx.fillStyle = 'rgba(7,7,15,0.88)';
-        ctx.beginPath();
-        if (ctx.roundRect) ctx.roundRect(cx - tw / 2 - pad, cy - 12, tw + pad * 2, 24, 6);
-        else ctx.rect(cx - tw / 2 - pad, cy - 12, tw + pad * 2, 24);
-        ctx.fill();
-        ctx.strokeStyle = hexRgba(zone.color, 0.5);
-        ctx.lineWidth = 1;
-        ctx.stroke();
-        ctx.fillStyle = '#fff';
-        ctx.fillText(label, cx, cy);
-      }
+      // Zone name label
+      const cx = pts.reduce((s, p) => s + p.x, 0) / pts.length;
+      const cy = pts.reduce((s, p) => s + p.y, 0) / pts.length;
+      const label = zone.name;
+      ctx.font = '600 12px -apple-system, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      const tw = ctx.measureText(label).width;
+      const pad = 8;
+      ctx.fillStyle = 'rgba(7,7,15,0.88)';
+      if (ctx.roundRect) ctx.roundRect(cx - tw / 2 - pad, cy - 12, tw + pad * 2, 24, 6);
+      else ctx.rect(cx - tw / 2 - pad, cy - 12, tw + pad * 2, 24);
+      ctx.fill();
+      ctx.strokeStyle = hexRgba(zone.color, 0.5);
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      ctx.fillStyle = '#fff';
+      ctx.fillText(label, cx, cy);
 
       ctx.restore();
     }
@@ -239,7 +229,7 @@ export default function Scanner({ mode = 'tap', onBack, onConfirm, onCapture }) 
     return () => window.removeEventListener('resize', h);
   }, [resize, draw]);
 
-  // ── Zone finding (area-based — smallest polygon wins on overlap) ──────────
+  // ── Zone finding (area-based) ──────────────────────────────────────────────
 
   const findZone = useCallback((px, py) => {
     const lm = lmRef.current;
@@ -257,79 +247,9 @@ export default function Scanner({ mode = 'tap', onBack, onConfirm, onCapture }) 
     return null;
   }, []);
 
-  // ── Zoom helper (hover mode) ───────────────────────────────────────────────
-
-  const applyZoom = useCallback((zone, pts) => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const r = canvas.getBoundingClientRect();
-    const xs = pts.map(p => p.x), ys = pts.map(p => p.y);
-    const cx = (Math.min(...xs) + Math.max(...xs)) / 2;
-    const cy = (Math.min(...ys) + Math.max(...ys)) / 2;
-    const zoneW = Math.max(...xs) - Math.min(...xs);
-    const zoneH = Math.max(...ys) - Math.min(...ys);
-    // Visual coords in cam-wrap space (canvas has scaleX(-1))
-    const vizX = (1 - cx / canvas.width) * r.width;
-    const vizY = (cy / canvas.height) * r.height;
-    const dispW = (zoneW / canvas.width) * r.width;
-    const dispH = (zoneH / canvas.height) * r.height;
-    const scale = Math.min(
-      dispW > 0 ? r.width * 0.75 / dispW : 3,
-      dispH > 0 ? r.height * 0.75 / dispH : 3,
-      3.2,
-    );
-    setZoomStyle({
-      transform: `scale(${scale.toFixed(2)})`,
-      transformOrigin: `${vizX.toFixed(1)}px ${vizY.toFixed(1)}px`,
-      transition: 'transform 0.35s cubic-bezier(0.4,0,0.2,1)',
-    });
-  }, []);
-
   // ── Interaction ───────────────────────────────────────────────────────────
 
-  // Tap mode: mouse hover (cosmetic highlight only)
-  const handleMouseMove = useCallback((e) => {
-    if (mode !== 'tap' || !lmRef.current || pendIdRef.current) return;
-    const p = toCanvas(e.clientX, e.clientY, canvasRef.current);
-    const z = findZone(p.x, p.y);
-    const id = z?.id ?? null;
-    if (id !== hovIdRef.current) {
-      hovIdRef.current = id;
-      setHovZone(z ?? null);
-      draw();
-    }
-  }, [mode, findZone, draw]);
-
-  const handleMouseLeave = useCallback(() => {
-    if (mode !== 'tap' || pendIdRef.current) return;
-    hovIdRef.current = null;
-    setHovZone(null);
-    draw();
-  }, [mode, draw]);
-
-  // Hover mode: move selects zone + zoom
-  const handleHoverMove = useCallback((clientX, clientY) => {
-    if (mode !== 'hover' || !lmRef.current) return;
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const p = toCanvas(clientX, clientY, canvas);
-    const z = findZone(p.x, p.y);
-    const id = z?.id ?? null;
-    if (id !== hovIdRef.current) {
-      hovIdRef.current = id;
-      setHovZone(z ?? null);
-      if (z) {
-        const lm = lmRef.current;
-        const pts = getPolyPts(z, lm, canvas.width, canvas.height);
-        applyZoom(z, pts);
-      } else {
-        setZoomStyle({});
-      }
-      draw();
-    }
-  }, [mode, findZone, applyZoom, draw]);
-
-  // Tap mode: click/tap selects pending zone
+  // Tap mode: click → pending zone → ConfirmDialog
   const handleTap = useCallback((clientX, clientY) => {
     if (mode !== 'tap' || !lmRef.current || pendIdRef.current) return;
     const p = toCanvas(clientX, clientY, canvasRef.current);
@@ -337,25 +257,35 @@ export default function Scanner({ mode = 'tap', onBack, onConfirm, onCapture }) 
     if (z) {
       pendIdRef.current = z.id;
       hovIdRef.current = null;
-      setHovZone(null);
       setPendZone(z);
       draw();
     }
   }, [mode, findZone, draw]);
 
-  const handleClick    = useCallback(e => handleTap(e.clientX, e.clientY), [handleTap]);
+  // Tap mode: mouse hover (cosmetic highlight)
+  const handleMouseMove = useCallback((e) => {
+    if (mode !== 'tap' || !lmRef.current || pendIdRef.current) return;
+    const p = toCanvas(e.clientX, e.clientY, canvasRef.current);
+    const z = findZone(p.x, p.y);
+    const id = z?.id ?? null;
+    if (id !== hovIdRef.current) {
+      hovIdRef.current = id;
+      draw();
+    }
+  }, [mode, findZone, draw]);
 
+  const handleMouseLeave = useCallback(() => {
+    if (mode !== 'tap' || pendIdRef.current) return;
+    hovIdRef.current = null;
+    draw();
+  }, [mode, draw]);
+
+  const handleClick    = useCallback(e => handleTap(e.clientX, e.clientY), [handleTap]);
   const handleTouchEnd = useCallback(e => {
     e.preventDefault();
-    if (!e.changedTouches.length) return;
-    if (mode === 'tap') handleTap(e.changedTouches[0].clientX, e.changedTouches[0].clientY);
+    if (mode === 'tap' && e.changedTouches.length)
+      handleTap(e.changedTouches[0].clientX, e.changedTouches[0].clientY);
   }, [mode, handleTap]);
-
-  const handleTouchMove = useCallback(e => {
-    e.preventDefault();
-    if (mode !== 'hover' || !e.touches.length) return;
-    handleHoverMove(e.touches[0].clientX, e.touches[0].clientY);
-  }, [mode, handleHoverMove]);
 
   const cancelPending = useCallback(() => {
     pendIdRef.current = null;
@@ -371,6 +301,13 @@ export default function Scanner({ mode = 'tap', onBack, onConfirm, onCapture }) 
     draw();
     if (z) onConfirm(z);
   }, [pendZone, onConfirm, draw]);
+
+  // Guided mode: select zone from list
+  const selectGuideZone = useCallback((z) => {
+    guideRef.current = z;
+    setGuideZone(z);
+    draw();
+  }, [draw]);
 
   const captureFrame = useCallback(() => {
     const video = videoRef.current;
@@ -392,37 +329,33 @@ export default function Scanner({ mode = 'tap', onBack, onConfirm, onCapture }) 
   }, [onBack]);
 
   // ── Render ────────────────────────────────────────────────────────────────
-  const showHoverValidate = mode === 'hover' && hovZone;
 
   return (
     <div className="scanner">
       <div className="scan-bar">
         <button className="btn-back" onClick={handleBack}>← Retour</button>
-
-        {showHoverValidate ? (
-          <>
-            <span className="status-msg" style={{ color: '#fff', fontWeight: 600 }}>
-              {hovZone.name}
-            </span>
-            <button className="btn-validate" onClick={() => onConfirm(hovZone)}>
-              Valider →
-            </button>
-          </>
+        {mode === 'hover' ? (
+          guideZone ? (
+            <>
+              <span className="status-msg" style={{ color: '#fff', fontWeight: 600 }}>{guideZone.name}</span>
+              <button className="btn-validate" onClick={() => onConfirm(guideZone)}>Valider →</button>
+            </>
+          ) : (
+            <span className="status-msg">Sélectionnez une zone ci-dessous</span>
+          )
         ) : (
           <>
             <span className="status-msg">
-              {mode === 'hover'
-                ? 'Glissez sur une zone du visage'
-                : (hintVisible ? 'Touchez une zone' : 'Placez votre visage face à la caméra')}
+              {hintVisible ? 'Touchez une zone du visage' : 'Placez votre visage face à la caméra'}
             </span>
-            {hintVisible && !pendZone && mode === 'tap' && (
+            {hintVisible && !pendZone && (
               <button className="btn-capture" onClick={captureFrame}>Carte</button>
             )}
           </>
         )}
       </div>
 
-      <div className="cam-wrap" ref={camWrapRef} style={zoomStyle}>
+      <div className="cam-wrap" style={mode === 'hover' ? { flex: '0 0 52%' } : {}}>
         <video ref={videoRef} className="cam-video" playsInline muted />
         <canvas
           ref={canvasRef}
@@ -431,7 +364,6 @@ export default function Scanner({ mode = 'tap', onBack, onConfirm, onCapture }) 
           onMouseLeave={handleMouseLeave}
           onClick={handleClick}
           onTouchEnd={handleTouchEnd}
-          onTouchMove={handleTouchMove}
         />
 
         {loading && (
@@ -447,6 +379,27 @@ export default function Scanner({ mode = 'tap', onBack, onConfirm, onCapture }) 
 
         <ConfirmDialog zone={pendZone} onConfirm={confirmZone} onCancel={cancelPending} />
       </div>
+
+      {mode === 'hover' && (
+        <div className="zone-guide-panel">
+          <div className="zone-guide-chips">
+            {ZONES.map(z => (
+              <button
+                key={z.id}
+                className={`zone-chip${guideZone?.id === z.id ? ' selected' : ''}`}
+                style={guideZone?.id === z.id ? {
+                  borderColor: z.color,
+                  color: z.color,
+                  background: `${z.color}22`,
+                } : {}}
+                onClick={() => selectGuideZone(guideZone?.id === z.id ? null : z)}
+              >
+                {z.name}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

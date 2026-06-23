@@ -103,6 +103,38 @@ const ZONES = [
     ],
   },
 
+  // ── PAUPIÈRE SUPÉRIEURE DROITE (skin between eye outline and brow) ───────────
+  {
+    id: 'right_eyelid',
+    name: 'Paupière droite',
+    icon: '◔',
+    color: '#A0C8FF',
+    sortByAngle: true,
+    poly: [246, 161, 160, 159, 158, 157, 173, 133, 130, 29, 27, 28, 56, 190, 243, 112, 26, 33],
+    desc: 'Fard à paupières, ombre, crease, paupière mobile',
+    tips: ['Estomper l\'ombre de l\'interne vers l\'externe', 'Primer les paupières pour une tenue longue durée'],
+    tutorials: [
+      { title: 'Ombre à paupières : les bases pour débutantes', q: 'ombre paupières débutante tutoriel makeup', dur: '~8 min' },
+      { title: 'Smoky eye : technique facile', q: 'smoky eye facile tutoriel maquillage', dur: '~7 min' },
+    ],
+  },
+
+  // ── PAUPIÈRE SUPÉRIEURE GAUCHE ────────────────────────────────────────────────
+  {
+    id: 'left_eyelid',
+    name: 'Paupière gauche',
+    icon: '◔',
+    color: '#A0C8FF',
+    sortByAngle: true,
+    poly: [466, 388, 387, 386, 385, 384, 398, 362, 359, 260, 259, 257, 258, 286, 414, 463, 341, 263],
+    desc: 'Fard à paupières, ombre, crease, paupière mobile',
+    tips: ['Estomper l\'ombre de l\'interne vers l\'externe', 'Primer les paupières pour une tenue longue durée'],
+    tutorials: [
+      { title: 'Ombre à paupières : les bases pour débutantes', q: 'ombre paupières débutante tutoriel makeup', dur: '~8 min' },
+      { title: 'Smoky eye : technique facile', q: 'smoky eye facile tutoriel maquillage', dur: '~7 min' },
+    ],
+  },
+
   // ── CERNE DROIT — inner sub-orbital strip only, no pommette overlap ───────────
   {
     id: 'right_undereye',

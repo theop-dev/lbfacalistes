@@ -60,7 +60,6 @@ export default function FaceMapPage({ captureData, onBack, onZoneSelect }) {
 
   const [selectedZone, setSelectedZone] = useState(null);
   const [mode,         setMode]         = useState('tap'); // 'tap' | 'hover'
-  const [zoomStyle,    setZoomStyle]    = useState({});
 
   // ── Draw ──────────────────────────────────────────────────────────────────
 
@@ -73,9 +72,11 @@ export default function FaceMapPage({ captureData, onBack, onZoneSelect }) {
 
     const sorted = [...ZONES].sort((a, b) => b.poly.length - a.poly.length);
     for (const zone of sorted) {
+      const active = activeZone?.id === zone.id;
+      if (!active) continue; // invisible resting state
+
       const pts = getPolyPts(zone, lm, w, h);
       if (pts.length < 3) continue;
-      const active = activeZone?.id === zone.id;
 
       ctx.save();
       ctx.beginPath();
@@ -83,37 +84,33 @@ export default function FaceMapPage({ captureData, onBack, onZoneSelect }) {
       for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i].x, pts[i].y);
       ctx.closePath();
 
-      if (active) {
-        ctx.shadowColor = hexRgba(zone.color, 0.9);
-        ctx.shadowBlur  = 24;
-        ctx.fillStyle   = hexRgba(zone.color, 0.42);
-        ctx.fill();
-        ctx.shadowBlur  = 0;
-      }
+      ctx.shadowColor = hexRgba(zone.color, 0.85);
+      ctx.shadowBlur  = 24;
+      ctx.fillStyle   = hexRgba(zone.color, 0.42);
+      ctx.fill();
+      ctx.shadowBlur  = 0;
 
-      ctx.strokeStyle = active ? hexRgba(zone.color, 1) : hexRgba(zone.color, 0.4);
-      ctx.lineWidth   = active ? 2.5 : 0.9;
+      ctx.strokeStyle = hexRgba(zone.color, 1);
+      ctx.lineWidth   = 2.5;
       ctx.beginPath();
       ctx.moveTo(pts[0].x, pts[0].y);
       for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i].x, pts[i].y);
       ctx.closePath();
       ctx.stroke();
 
-      if (active) {
-        const cx = pts.reduce((s, p) => s + p.x, 0) / pts.length;
-        const cy = pts.reduce((s, p) => s + p.y, 0) / pts.length;
-        const label = zone.name;
-        ctx.font = '700 13px -apple-system, sans-serif';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        const tw = ctx.measureText(label).width + 20;
-        ctx.fillStyle = 'rgba(7,7,15,0.88)';
-        if (ctx.roundRect) ctx.roundRect(cx - tw / 2, cy - 13, tw, 26, 6);
-        else ctx.rect(cx - tw / 2, cy - 13, tw, 26);
-        ctx.fill();
-        ctx.fillStyle = '#fff';
-        ctx.fillText(label, cx, cy);
-      }
+      const cx = pts.reduce((s, p) => s + p.x, 0) / pts.length;
+      const cy = pts.reduce((s, p) => s + p.y, 0) / pts.length;
+      const label = zone.name;
+      ctx.font = '700 13px -apple-system, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      const tw = ctx.measureText(label).width + 20;
+      ctx.fillStyle = 'rgba(7,7,15,0.88)';
+      if (ctx.roundRect) ctx.roundRect(cx - tw / 2, cy - 13, tw, 26, 6);
+      else ctx.rect(cx - tw / 2, cy - 13, tw, 26);
+      ctx.fill();
+      ctx.fillStyle = '#fff';
+      ctx.fillText(label, cx, cy);
 
       ctx.restore();
     }
@@ -161,38 +158,10 @@ export default function FaceMapPage({ captureData, onBack, onZoneSelect }) {
     return null;
   }, [lm]);
 
-  // ── Zoom helper ───────────────────────────────────────────────────────────
-
-  const applyZoom = useCallback((zone, pts) => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const r = canvas.getBoundingClientRect();
-    const xs = pts.map(p => p.x), ys = pts.map(p => p.y);
-    const cx = (Math.min(...xs) + Math.max(...xs)) / 2;
-    const cy = (Math.min(...ys) + Math.max(...ys)) / 2;
-    const zoneW = Math.max(...xs) - Math.min(...xs);
-    const zoneH = Math.max(...ys) - Math.min(...ys);
-    const vizX = (1 - cx / canvas.width) * r.width;
-    const vizY = (cy / canvas.height) * r.height;
-    const dispW = (zoneW / canvas.width) * r.width;
-    const dispH = (zoneH / canvas.height) * r.height;
-    const scale = Math.min(
-      dispW > 0 ? r.width * 0.75 / dispW : 3,
-      dispH > 0 ? r.height * 0.75 / dispH : 3,
-      3.2,
-    );
-    setZoomStyle({
-      transform: `scale(${scale.toFixed(2)})`,
-      transformOrigin: `${vizX.toFixed(1)}px ${vizY.toFixed(1)}px`,
-      transition: 'transform 0.35s cubic-bezier(0.4,0,0.2,1)',
-    });
-  }, []);
-
   // ── Interaction ───────────────────────────────────────────────────────────
 
   const switchMode = (newMode) => {
     setMode(newMode);
-    setZoomStyle({});
     setSelectedZone(null);
   };
 
@@ -202,49 +171,34 @@ export default function FaceMapPage({ captureData, onBack, onZoneSelect }) {
     setSelectedZone(z ?? null);
   }, [mode, findZoneAt]);
 
-  const handleMove = useCallback((clientX, clientY) => {
-    if (mode !== 'hover') return;
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const z = findZoneAt(clientX, clientY);
-    if (z?.id !== activeRef.current?.id) {
-      setSelectedZone(z ?? null);
-      if (z) {
-        const pts = getPolyPts(z, lm, canvas.width, canvas.height);
-        applyZoom(z, pts);
-      } else {
-        setZoomStyle({});
-      }
-    }
-  }, [mode, findZoneAt, lm, applyZoom]);
+  // Guided mode: select zone from list
+  const selectGuideZone = (z) => {
+    setSelectedZone(prev => prev?.id === z.id ? null : z);
+  };
 
   // ── Render ────────────────────────────────────────────────────────────────
-  const showHoverValidate = mode === 'hover' && selectedZone;
 
   return (
     <div className="scanner">
       <div className="scan-bar">
         <button className="btn-back" onClick={onBack}>← Nouveau scan</button>
-
-        {showHoverValidate ? (
-          <>
-            <span className="status-msg" style={{ color: '#fff', fontWeight: 600 }}>
-              {selectedZone.name}
-            </span>
-            <button className="btn-validate" onClick={() => onZoneSelect(selectedZone)}>
-              Valider →
-            </button>
-          </>
+        {mode === 'hover' ? (
+          selectedZone ? (
+            <>
+              <span className="status-msg" style={{ color: '#fff', fontWeight: 600 }}>{selectedZone.name}</span>
+              <button className="btn-validate" onClick={() => onZoneSelect(selectedZone)}>Valider →</button>
+            </>
+          ) : (
+            <span className="status-msg">Sélectionnez une zone ci-dessous</span>
+          )
         ) : (
           <>
             <span className="status-msg">
-              {mode === 'hover'
-                ? 'Glissez pour explorer'
-                : (selectedZone ? selectedZone.name : 'Touchez une zone du visage')}
+              {selectedZone ? selectedZone.name : 'Touchez une zone du visage'}
             </span>
             <div className="mode-toggle">
               <button className={`mode-btn${mode === 'tap' ? ' active' : ''}`} onClick={() => switchMode('tap')}>Taper</button>
-              <button className={`mode-btn${mode === 'hover' ? ' active' : ''}`} onClick={() => switchMode('hover')}>Glisser</button>
+              <button className={`mode-btn${mode === 'hover' ? ' active' : ''}`} onClick={() => switchMode('hover')}>Liste</button>
             </div>
             {mode === 'tap' && selectedZone && (
               <button className="btn-back" style={{ padding: '0.4rem 0.6rem' }} onClick={() => setSelectedZone(null)}>✕</button>
@@ -253,24 +207,16 @@ export default function FaceMapPage({ captureData, onBack, onZoneSelect }) {
         )}
       </div>
 
-      <div className="cam-wrap" style={zoomStyle}>
+      <div className="cam-wrap" style={mode === 'hover' ? { flex: '0 0 52%' } : {}}>
         <img src={imageData} className="cam-video" alt="" draggable={false} />
         <canvas
           ref={canvasRef}
           className="cam-canvas"
           onClick={(e) => handleTap(e.clientX, e.clientY)}
-          onMouseMove={(e) => handleMove(e.clientX, e.clientY)}
           onTouchEnd={(e) => {
             e.preventDefault();
             if (!e.changedTouches.length) return;
-            const t = e.changedTouches[0];
-            handleTap(t.clientX, t.clientY);
-          }}
-          onTouchMove={(e) => {
-            e.preventDefault();
-            if (!e.touches.length) return;
-            const t = e.touches[0];
-            handleMove(t.clientX, t.clientY);
+            handleTap(e.changedTouches[0].clientX, e.changedTouches[0].clientY);
           }}
         />
       </div>
@@ -302,6 +248,27 @@ export default function FaceMapPage({ captureData, onBack, onZoneSelect }) {
           <button className="btn-confirm-yes facemap-full-btn" onClick={() => onZoneSelect(selectedZone)}>
             Tutoriel complet →
           </button>
+        </div>
+      )}
+
+      {mode === 'hover' && (
+        <div className="zone-guide-panel">
+          <div className="zone-guide-chips">
+            {ZONES.map(z => (
+              <button
+                key={z.id}
+                className={`zone-chip${selectedZone?.id === z.id ? ' selected' : ''}`}
+                style={selectedZone?.id === z.id ? {
+                  borderColor: z.color,
+                  color: z.color,
+                  background: `${z.color}22`,
+                } : {}}
+                onClick={() => selectGuideZone(z)}
+              >
+                {z.name}
+              </button>
+            ))}
+          </div>
         </div>
       )}
     </div>
