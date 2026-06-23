@@ -1,16 +1,8 @@
 function YTLogo() {
   return (
-    <svg viewBox="0 0 71 50" width="38" height="27" fill="none" className="tuto-yt-icon">
+    <svg viewBox="0 0 71 50" width="34" height="24" fill="none" style={{ flexShrink: 0 }}>
       <path d="M69.5 7.8a8.9 8.9 0 00-6.3-6.3C57.8 0 35.5 0 35.5 0S13.2 0 7.8 1.5A8.9 8.9 0 001.5 7.8C0 13.2 0 24.5 0 24.5s0 11.3 1.5 16.7a8.9 8.9 0 006.3 6.3C13.2 49 35.5 49 35.5 49s22.3 0 27.7-1.5a8.9 8.9 0 006.3-6.3C71 35.8 71 24.5 71 24.5S71 13.2 69.5 7.8z" fill="#FF0000"/>
       <path d="M28.5 35l18.5-10.5L28.5 14v21z" fill="white"/>
-    </svg>
-  );
-}
-
-function ChevronRight() {
-  return (
-    <svg viewBox="0 0 16 16" fill="none" width="15" height="15" className="tuto-yt-arrow">
-      <path d="M6 3l5 5-5 5" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
     </svg>
   );
 }
@@ -28,6 +20,7 @@ export default function TutorialPage({ zone, onBack }) {
   return (
     <div className="tuto-page">
 
+      {/* Header */}
       <div className="tuto-header">
         <button className="btn-back-tuto" onClick={onBack}>← Retour</button>
         <div className="tuto-header-zone">
@@ -36,34 +29,40 @@ export default function TutorialPage({ zone, onBack }) {
         </div>
       </div>
 
-      <div className="tuto-vids" style={{ '--rgb': rgb }}>
+      {/* Scrollable content */}
+      <div className="tuto-content">
 
-        <div className="tuto-zone-hero">
-          <div className="tuto-zone-hero-name">{zone.name}</div>
-          <div className="tuto-zone-hero-desc">{zone.desc}</div>
+        {/* Zone hero */}
+        <div className="tuto-hero-block" style={{ '--rgb': rgb }}>
+          <div className="tuto-hero-icon" style={{ background: zone.color }} />
+          <div className="tuto-hero-text">
+            <h1 className="tuto-hero-name">{zone.name}</h1>
+            <p className="tuto-hero-desc">{zone.desc}</p>
+          </div>
         </div>
 
-        <div className="tuto-divider"><span>Tutoriels</span></div>
-
-        {zone.tutorials.slice(0, 2).map((t, i) => (
-          <a
-            key={i}
-            href={ytUrl(t.q)}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="tuto-yt-link"
-          >
-            <YTLogo />
-            <div className="tuto-yt-text">
-              <span className="tuto-yt-title">{t.title}</span>
-              <span className="tuto-yt-dur">{t.dur} · Voir sur YouTube</span>
-            </div>
-            <ChevronRight />
-          </a>
-        ))}
+        {/* Grouped video list */}
+        <p className="tuto-group-header">Tutoriels</p>
+        <div className="tuto-group" style={{ '--rgb': rgb }}>
+          {zone.tutorials.slice(0, 2).map((t, i) => (
+            <a
+              key={i}
+              href={ytUrl(t.q)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="tuto-group-row"
+            >
+              <YTLogo />
+              <div className="tuto-row-body">
+                <span className="tuto-row-title">{t.title}</span>
+                <span className="tuto-row-meta">{t.dur}</span>
+              </div>
+              <span className="tuto-chevron">›</span>
+            </a>
+          ))}
+        </div>
 
       </div>
-
     </div>
   );
 }
