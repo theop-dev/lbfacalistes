@@ -1,8 +1,16 @@
-function YTIcon() {
+function YTLogo() {
   return (
-    <svg viewBox="0 0 71 50" width="36" height="26" fill="none">
+    <svg viewBox="0 0 71 50" width="38" height="27" fill="none" className="tuto-yt-icon">
       <path d="M69.5 7.8a8.9 8.9 0 00-6.3-6.3C57.8 0 35.5 0 35.5 0S13.2 0 7.8 1.5A8.9 8.9 0 001.5 7.8C0 13.2 0 24.5 0 24.5s0 11.3 1.5 16.7a8.9 8.9 0 006.3 6.3C13.2 49 35.5 49 35.5 49s22.3 0 27.7-1.5a8.9 8.9 0 006.3-6.3C71 35.8 71 24.5 71 24.5S71 13.2 69.5 7.8z" fill="#FF0000"/>
       <path d="M28.5 35l18.5-10.5L28.5 14v21z" fill="white"/>
+    </svg>
+  );
+}
+
+function ChevronRight() {
+  return (
+    <svg viewBox="0 0 16 16" fill="none" width="15" height="15" className="tuto-yt-arrow">
+      <path d="M6 3l5 5-5 5" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
     </svg>
   );
 }
@@ -29,7 +37,14 @@ export default function TutorialPage({ zone, onBack }) {
       </div>
 
       <div className="tuto-vids" style={{ '--rgb': rgb }}>
-        <p className="tuto-zone-label">{zone.name} — tutoriels</p>
+
+        <div className="tuto-zone-hero">
+          <div className="tuto-zone-hero-name">{zone.name}</div>
+          <div className="tuto-zone-hero-desc">{zone.desc}</div>
+        </div>
+
+        <div className="tuto-divider"><span>Tutoriels</span></div>
+
         {zone.tutorials.slice(0, 2).map((t, i) => (
           <a
             key={i}
@@ -38,16 +53,15 @@ export default function TutorialPage({ zone, onBack }) {
             rel="noopener noreferrer"
             className="tuto-yt-link"
           >
-            <YTIcon />
+            <YTLogo />
             <div className="tuto-yt-text">
               <span className="tuto-yt-title">{t.title}</span>
               <span className="tuto-yt-dur">{t.dur} · Voir sur YouTube</span>
             </div>
-            <svg viewBox="0 0 16 16" fill="none" width="16" height="16" className="tuto-yt-arrow">
-              <path d="M6 3l5 5-5 5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
+            <ChevronRight />
           </a>
         ))}
+
       </div>
 
     </div>
