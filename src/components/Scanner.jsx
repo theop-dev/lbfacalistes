@@ -62,7 +62,7 @@ function hexRgba(hex, alpha) {
 
 // ── Scanner ───────────────────────────────────────────────────────────────────
 
-export default function Scanner({ onBack, onConfirm, onCapture }) {
+export default function Scanner({ mode = 'tap', onBack, onConfirm, onCapture }) {
   const videoRef  = useRef(null);
   const canvasRef = useRef(null);
   const camWrapRef = useRef(null);
@@ -80,7 +80,6 @@ export default function Scanner({ onBack, onConfirm, onCapture }) {
   const [hovZone,     setHovZone]     = useState(null);
   const [pendZone,    setPendZone]    = useState(null);
   const [faceAlert,   setFaceAlert]   = useState(null);
-  const [mode,        setMode]        = useState('tap'); // 'tap' | 'hover'
   const [zoomStyle,   setZoomStyle]   = useState({});
 
   // ── Draw ──────────────────────────────────────────────────────────────────
@@ -288,16 +287,6 @@ export default function Scanner({ onBack, onConfirm, onCapture }) {
 
   // ── Interaction ───────────────────────────────────────────────────────────
 
-  const switchMode = useCallback((newMode) => {
-    setMode(newMode);
-    setZoomStyle({});
-    hovIdRef.current = null;
-    pendIdRef.current = null;
-    setHovZone(null);
-    setPendZone(null);
-    draw();
-  }, [draw]);
-
   // Tap mode: mouse hover (cosmetic highlight only)
   const handleMouseMove = useCallback((e) => {
     if (mode !== 'tap' || !lmRef.current || pendIdRef.current) return;
@@ -422,12 +411,10 @@ export default function Scanner({ onBack, onConfirm, onCapture }) {
         ) : (
           <>
             <span className="status-msg">
-              {mode === 'hover' ? 'Glissez sur une zone du visage' : (hintVisible ? 'Touchez une zone' : 'Placez votre visage face à la caméra')}
+              {mode === 'hover'
+                ? 'Glissez sur une zone du visage'
+                : (hintVisible ? 'Touchez une zone' : 'Placez votre visage face à la caméra')}
             </span>
-            <div className="mode-toggle">
-              <button className={`mode-btn${mode === 'tap' ? ' active' : ''}`} onClick={() => switchMode('tap')}>Taper</button>
-              <button className={`mode-btn${mode === 'hover' ? ' active' : ''}`} onClick={() => switchMode('hover')}>Glisser</button>
-            </div>
             {hintVisible && !pendZone && mode === 'tap' && (
               <button className="btn-capture" onClick={captureFrame}>Carte</button>
             )}

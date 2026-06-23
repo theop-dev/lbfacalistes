@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import Landing from './components/Landing';
+import ModeSelectPage from './components/ModeSelectPage';
 import Scanner from './components/Scanner';
 import FaceMapPage from './components/FaceMapPage';
 import TutorialPage from './components/TutorialPage';
 
 export default function App() {
   const [screen, setScreen]           = useState('landing');
+  const [scanMode, setScanMode]       = useState('tap');  // 'tap' | 'hover'
   const [zone, setZone]               = useState(null);
   const [captureData, setCaptureData] = useState(null);
 
@@ -29,11 +31,20 @@ export default function App() {
   if (screen === 'scanner')
     return (
       <Scanner
-        onBack={() => setScreen('landing')}
+        mode={scanMode}
+        onBack={() => setScreen('mode-select')}
         onCapture={(data) => { setCaptureData(data); setScreen('facemap'); }}
         onConfirm={(z) => { setZone(z); setScreen('tutorial'); }}
       />
     );
 
-  return <Landing onStart={() => setScreen('scanner')} />;
+  if (screen === 'mode-select')
+    return (
+      <ModeSelectPage
+        onSelect={(m) => { setScanMode(m); setScreen('scanner'); }}
+        onBack={() => setScreen('landing')}
+      />
+    );
+
+  return <Landing onStart={() => setScreen('mode-select')} />;
 }
