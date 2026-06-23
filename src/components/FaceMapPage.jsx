@@ -59,7 +59,6 @@ export default function FaceMapPage({ captureData, onBack, onZoneSelect }) {
   const activeRef  = useRef(null);
 
   const [selectedZone, setSelectedZone] = useState(null);
-  const [mode,         setMode]         = useState('tap'); // 'tap' | 'hover'
 
   // ── Draw ──────────────────────────────────────────────────────────────────
 
@@ -160,21 +159,10 @@ export default function FaceMapPage({ captureData, onBack, onZoneSelect }) {
 
   // ── Interaction ───────────────────────────────────────────────────────────
 
-  const switchMode = (newMode) => {
-    setMode(newMode);
-    setSelectedZone(null);
-  };
-
   const handleTap = useCallback((clientX, clientY) => {
-    if (mode !== 'tap') return;
     const z = findZoneAt(clientX, clientY);
     setSelectedZone(z ?? null);
-  }, [mode, findZoneAt]);
-
-  // Guided mode: select zone from list
-  const selectGuideZone = (z) => {
-    setSelectedZone(prev => prev?.id === z.id ? null : z);
-  };
+  }, [findZoneAt]);
 
   // ── Render ────────────────────────────────────────────────────────────────
 
@@ -182,32 +170,15 @@ export default function FaceMapPage({ captureData, onBack, onZoneSelect }) {
     <div className="scanner">
       <div className="scan-bar">
         <button className="btn-back" onClick={onBack}>← Nouveau scan</button>
-        {mode === 'hover' ? (
-          selectedZone ? (
-            <>
-              <span className="status-msg" style={{ color: '#fff', fontWeight: 600 }}>{selectedZone.name}</span>
-              <button className="btn-validate" onClick={() => onZoneSelect(selectedZone)}>Valider →</button>
-            </>
-          ) : (
-            <span className="status-msg">Sélectionnez une zone ci-dessous</span>
-          )
-        ) : (
-          <>
-            <span className="status-msg">
-              {selectedZone ? selectedZone.name : 'Touchez une zone du visage'}
-            </span>
-            <div className="mode-toggle">
-              <button className={`mode-btn${mode === 'tap' ? ' active' : ''}`} onClick={() => switchMode('tap')}>Taper</button>
-              <button className={`mode-btn${mode === 'hover' ? ' active' : ''}`} onClick={() => switchMode('hover')}>Liste</button>
-            </div>
-            {mode === 'tap' && selectedZone && (
-              <button className="btn-back" style={{ padding: '0.4rem 0.6rem' }} onClick={() => setSelectedZone(null)}>✕</button>
-            )}
-          </>
+        <span className="status-msg">
+          {selectedZone ? selectedZone.name : 'Touchez une zone du visage'}
+        </span>
+        {selectedZone && (
+          <button className="btn-back" style={{ padding: '0.4rem 0.6rem' }} onClick={() => setSelectedZone(null)}>✕</button>
         )}
       </div>
 
-      <div className="cam-wrap" style={mode === 'hover' ? { flex: '0 0 52%' } : {}}>
+      <div className="cam-wrap">
         <img src={imageData} className="cam-video" alt="" draggable={false} />
         <canvas
           ref={canvasRef}
@@ -221,7 +192,7 @@ export default function FaceMapPage({ captureData, onBack, onZoneSelect }) {
         />
       </div>
 
-      {mode === 'tap' && selectedZone && (
+      {selectedZone && (
         <div className="facemap-panel">
           <div className="facemap-header">
             <div className="facemap-zone-dot" style={{ background: selectedZone.color }} />
@@ -248,27 +219,6 @@ export default function FaceMapPage({ captureData, onBack, onZoneSelect }) {
           <button className="btn-confirm-yes facemap-full-btn" onClick={() => onZoneSelect(selectedZone)}>
             Tutoriel complet →
           </button>
-        </div>
-      )}
-
-      {mode === 'hover' && (
-        <div className="zone-guide-panel">
-          <div className="zone-guide-chips">
-            {ZONES.map(z => (
-              <button
-                key={z.id}
-                className={`zone-chip${selectedZone?.id === z.id ? ' selected' : ''}`}
-                style={selectedZone?.id === z.id ? {
-                  borderColor: z.color,
-                  color: z.color,
-                  background: `${z.color}22`,
-                } : {}}
-                onClick={() => selectGuideZone(z)}
-              >
-                {z.name}
-              </button>
-            ))}
-          </div>
         </div>
       )}
     </div>

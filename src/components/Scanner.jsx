@@ -1,5 +1,4 @@
 import { useRef, useEffect, useCallback, useState } from 'react';
-// FaceMesh loaded via CDN in index.html — do NOT npm-import (WASM can't be bundled)
 import ZONES from '../data/zones';
 import ConfirmDialog from './ConfirmDialog';
 
@@ -62,7 +61,7 @@ function hexRgba(hex, alpha) {
 
 // ── Scanner ───────────────────────────────────────────────────────────────────
 
-export default function Scanner({ mode = 'tap', onBack, onConfirm, onCapture }) {
+export default function Scanner({ onBack, onConfirm, onCapture }) {
   const videoRef  = useRef(null);
   const canvasRef = useRef(null);
   const animRef   = useRef(null);
@@ -71,17 +70,15 @@ export default function Scanner({ mode = 'tap', onBack, onConfirm, onCapture }) 
   const lmRef     = useRef(null);
   const hovIdRef  = useRef(null);
   const pendIdRef = useRef(null);
-  const guideRef  = useRef(null);
   const faceWas   = useRef(false);
 
   const [loaderText,  setLoaderText]  = useState('Initialisation...');
   const [loading,     setLoading]     = useState(true);
   const [hintVisible, setHintVisible] = useState(false);
   const [pendZone,    setPendZone]    = useState(null);
-  const [guideZone,   setGuideZone]   = useState(null);
   const [faceAlert,   setFaceAlert]   = useState(null);
 
-  // ── Draw — zones are INVISIBLE by default; only active zone is drawn ──────
+  // ── Draw — zones invisible by default, only active zone rendered ──────────
 
   const draw = useCallback(() => {
     const canvas = canvasRef.current;
@@ -92,14 +89,12 @@ export default function Scanner({ mode = 'tap', onBack, onConfirm, onCapture }) 
     ctx.clearRect(0, 0, w, h);
     if (!lm) return;
 
-    // Draw all zones but only render the active one
     const sortedZones = [...ZONES].sort((a, b) => b.poly.length - a.poly.length);
     for (const zone of sortedZones) {
-      const isHov   = hovIdRef.current === zone.id;
-      const isPend  = pendIdRef.current === zone.id;
-      const isGuide = guideRef.current?.id === zone.id;
-      const active  = isHov || isPend || isGuide;
-      if (!active) continue; // invisible resting state
+      const isHov  = hovIdRef.current === zone.id;
+      const isPend = pendIdRef.current === zone.id;
+      const active = isHov || isPend;
+      if (!active) continue;
 
       const pts = getPolyPts(zone, lm, w, h);
       if (pts.length < 3) continue;
@@ -114,8 +109,8 @@ export default function Scanner({ mode = 'tap', onBack, onConfirm, onCapture }) 
       ctx.shadowBlur  = 22;
       ctx.fillStyle   = hexRgba(zone.color, 0.36);
       ctx.fill();
-
       ctx.shadowBlur  = 0;
+
       ctx.strokeStyle = hexRgba(zone.color, 1);
       ctx.lineWidth   = 2.5;
       ctx.beginPath();
@@ -124,7 +119,6 @@ export default function Scanner({ mode = 'tap', onBack, onConfirm, onCapture }) 
       ctx.closePath();
       ctx.stroke();
 
-      // Zone name label
       const cx = pts.reduce((s, p) => s + p.x, 0) / pts.length;
       const cy = pts.reduce((s, p) => s + p.y, 0) / pts.length;
       const label = zone.name;
@@ -229,7 +223,7 @@ export default function Scanner({ mode = 'tap', onBack, onConfirm, onCapture }) 
     return () => window.removeEventListener('resize', h);
   }, [resize, draw]);
 
-  // ── Zone finding (area-based) ──────────────────────────────────────────────
+  // ── Zone finding (area-based — smallest polygon wins) ─────────────────────
 
   const findZone = useCallback((px, py) => {
     const lm = lmRef.current;
@@ -249,9 +243,25 @@ export default function Scanner({ mode = 'tap', onBack, onConfirm, onCapture }) 
 
   // ── Interaction ───────────────────────────────────────────────────────────
 
-  // Tap mode: click → pending zone → ConfirmDialog
+  const handleMouseMove = useCallback((e) => {
+    if (!lmRef.current || pendIdRef.current) return;
+    const p = toCanvas(e.clientX, e.clientY, canvasRef.current);
+    const z = findZone(p.x, p.y);
+    const id = z?.id ?? null;
+    if (id !== hovIdRef.current) {
+      hovIdRef.current = id;
+      draw();
+    }
+  }, [findZone, draw]);
+
+  const handleMouseLeave = useCallback(() => {
+    if (pendIdRef.current) return;
+    hovIdRef.current = null;
+    draw();
+  }, [draw]);
+
   const handleTap = useCallback((clientX, clientY) => {
-    if (mode !== 'tap' || !lmRef.current || pendIdRef.current) return;
+    if (!lmRef.current || pendIdRef.current) return;
     const p = toCanvas(clientX, clientY, canvasRef.current);
     const z = findZone(p.x, p.y);
     if (z) {
@@ -260,32 +270,13 @@ export default function Scanner({ mode = 'tap', onBack, onConfirm, onCapture }) 
       setPendZone(z);
       draw();
     }
-  }, [mode, findZone, draw]);
-
-  // Tap mode: mouse hover (cosmetic highlight)
-  const handleMouseMove = useCallback((e) => {
-    if (mode !== 'tap' || !lmRef.current || pendIdRef.current) return;
-    const p = toCanvas(e.clientX, e.clientY, canvasRef.current);
-    const z = findZone(p.x, p.y);
-    const id = z?.id ?? null;
-    if (id !== hovIdRef.current) {
-      hovIdRef.current = id;
-      draw();
-    }
-  }, [mode, findZone, draw]);
-
-  const handleMouseLeave = useCallback(() => {
-    if (mode !== 'tap' || pendIdRef.current) return;
-    hovIdRef.current = null;
-    draw();
-  }, [mode, draw]);
+  }, [findZone, draw]);
 
   const handleClick    = useCallback(e => handleTap(e.clientX, e.clientY), [handleTap]);
   const handleTouchEnd = useCallback(e => {
     e.preventDefault();
-    if (mode === 'tap' && e.changedTouches.length)
-      handleTap(e.changedTouches[0].clientX, e.changedTouches[0].clientY);
-  }, [mode, handleTap]);
+    if (e.changedTouches.length) handleTap(e.changedTouches[0].clientX, e.changedTouches[0].clientY);
+  }, [handleTap]);
 
   const cancelPending = useCallback(() => {
     pendIdRef.current = null;
@@ -301,13 +292,6 @@ export default function Scanner({ mode = 'tap', onBack, onConfirm, onCapture }) 
     draw();
     if (z) onConfirm(z);
   }, [pendZone, onConfirm, draw]);
-
-  // Guided mode: select zone from list
-  const selectGuideZone = useCallback((z) => {
-    guideRef.current = z;
-    setGuideZone(z);
-    draw();
-  }, [draw]);
 
   const captureFrame = useCallback(() => {
     const video = videoRef.current;
@@ -334,28 +318,15 @@ export default function Scanner({ mode = 'tap', onBack, onConfirm, onCapture }) 
     <div className="scanner">
       <div className="scan-bar">
         <button className="btn-back" onClick={handleBack}>← Retour</button>
-        {mode === 'hover' ? (
-          guideZone ? (
-            <>
-              <span className="status-msg" style={{ color: '#fff', fontWeight: 600 }}>{guideZone.name}</span>
-              <button className="btn-validate" onClick={() => onConfirm(guideZone)}>Valider →</button>
-            </>
-          ) : (
-            <span className="status-msg">Sélectionnez une zone ci-dessous</span>
-          )
-        ) : (
-          <>
-            <span className="status-msg">
-              {hintVisible ? 'Touchez une zone du visage' : 'Placez votre visage face à la caméra'}
-            </span>
-            {hintVisible && !pendZone && (
-              <button className="btn-capture" onClick={captureFrame}>Carte</button>
-            )}
-          </>
+        <span className="status-msg">
+          {hintVisible ? 'Touchez une zone du visage' : 'Placez votre visage face à la caméra'}
+        </span>
+        {hintVisible && !pendZone && (
+          <button className="btn-capture" onClick={captureFrame}>Carte</button>
         )}
       </div>
 
-      <div className="cam-wrap" style={mode === 'hover' ? { flex: '0 0 52%' } : {}}>
+      <div className="cam-wrap">
         <video ref={videoRef} className="cam-video" playsInline muted />
         <canvas
           ref={canvasRef}
@@ -379,27 +350,6 @@ export default function Scanner({ mode = 'tap', onBack, onConfirm, onCapture }) 
 
         <ConfirmDialog zone={pendZone} onConfirm={confirmZone} onCancel={cancelPending} />
       </div>
-
-      {mode === 'hover' && (
-        <div className="zone-guide-panel">
-          <div className="zone-guide-chips">
-            {ZONES.map(z => (
-              <button
-                key={z.id}
-                className={`zone-chip${guideZone?.id === z.id ? ' selected' : ''}`}
-                style={guideZone?.id === z.id ? {
-                  borderColor: z.color,
-                  color: z.color,
-                  background: `${z.color}22`,
-                } : {}}
-                onClick={() => selectGuideZone(guideZone?.id === z.id ? null : z)}
-              >
-                {z.name}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
     </div>
   );
 }
