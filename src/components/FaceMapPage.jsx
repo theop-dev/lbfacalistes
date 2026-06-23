@@ -1,7 +1,7 @@
 import { useRef, useEffect, useState, useCallback } from 'react';
 import ZONES from '../data/zones';
 
-// ── Geometry (mirrors Scanner.jsx) ───────────────────────────────────────────
+// ── Geometry ──────────────────────────────────────────────────────────────────
 
 function convexHull(pts) {
   if (pts.length < 3) return pts;
@@ -29,12 +29,19 @@ function getPolyPts(zone, lm, w, h) {
 function inPoly(px, py, pts) {
   let inside = false;
   for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
-    const xi = pts[i].x, yi = pts[i].y;
-    const xj = pts[j].x, yj = pts[j].y;
+    const xi = pts[i].x, yi = pts[i].y, xj = pts[j].x, yj = pts[j].y;
     if (((yi > py) !== (yj > py)) && px < ((xj - xi) * (py - yi)) / (yj - yi) + xi)
       inside = !inside;
   }
   return inside;
+}
+
+function polyArea(pts) {
+  let a = 0;
+  for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
+    a += (pts[j].x + pts[i].x) * (pts[j].y - pts[i].y);
+  }
+  return Math.abs(a / 2);
 }
 
 function hexRgba(hex, alpha) {
@@ -50,7 +57,12 @@ export default function FaceMapPage({ captureData, onBack, onZoneSelect }) {
   const { imageData, landmarks: lm } = captureData;
   const canvasRef  = useRef(null);
   const activeRef  = useRef(null);
+
   const [selectedZone, setSelectedZone] = useState(null);
+  const [mode,         setMode]         = useState('tap'); // 'tap' | 'hover'
+  const [zoomStyle,    setZoomStyle]    = useState({});
+
+  // ── Draw ──────────────────────────────────────────────────────────────────
 
   const draw = useCallback((activeZone) => {
     const canvas = canvasRef.current;
@@ -59,7 +71,6 @@ export default function FaceMapPage({ captureData, onBack, onZoneSelect }) {
     const w = canvas.width, h = canvas.height;
     ctx.clearRect(0, 0, w, h);
 
-    // Large zones drawn first so small zones appear on top
     const sorted = [...ZONES].sort((a, b) => b.poly.length - a.poly.length);
     for (const zone of sorted) {
       const pts = getPolyPts(zone, lm, w, h);
@@ -67,7 +78,6 @@ export default function FaceMapPage({ captureData, onBack, onZoneSelect }) {
       const active = activeZone?.id === zone.id;
 
       ctx.save();
-
       ctx.beginPath();
       ctx.moveTo(pts[0].x, pts[0].y);
       for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i].x, pts[i].y);
@@ -89,11 +99,10 @@ export default function FaceMapPage({ captureData, onBack, onZoneSelect }) {
       ctx.closePath();
       ctx.stroke();
 
-      // Label when active
       if (active) {
         const cx = pts.reduce((s, p) => s + p.x, 0) / pts.length;
         const cy = pts.reduce((s, p) => s + p.y, 0) / pts.length;
-        const label = `${zone.icon}  ${zone.name}`;
+        const label = zone.name;
         ctx.font = '700 13px -apple-system, sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
@@ -130,54 +139,146 @@ export default function FaceMapPage({ captureData, onBack, onZoneSelect }) {
     draw(selectedZone);
   }, [selectedZone, draw]);
 
-  const handleTap = useCallback((clientX, clientY) => {
+  // ── Zone finding (area-based) ─────────────────────────────────────────────
+
+  const findZoneAt = useCallback((clientX, clientY) => {
     const canvas = canvasRef.current;
-    if (!canvas || !lm) return;
+    if (!canvas || !lm) return null;
     const r  = canvas.getBoundingClientRect();
     const rx = (clientX - r.left) * (canvas.width / r.width);
     const ry = (clientY - r.top)  * (canvas.height / r.height);
-    // Mirror x — canvas has CSS scaleX(-1)
-    const px = canvas.width - rx, py = ry;
+    const px = canvas.width - rx, py = ry; // mirror x
 
-    const sorted = [...ZONES].sort((a, b) => a.poly.length - b.poly.length);
-    for (const zone of sorted) {
-      const pts = getPolyPts(zone, lm, canvas.width, canvas.height);
-      if (inPoly(px, py, pts)) { setSelectedZone(zone); return; }
+    const candidates = ZONES
+      .map(zone => ({ zone, pts: getPolyPts(zone, lm, canvas.width, canvas.height) }))
+      .filter(x => x.pts.length >= 3)
+      .map(x => ({ ...x, area: polyArea(x.pts) }))
+      .sort((a, b) => a.area - b.area);
+
+    for (const { zone, pts } of candidates) {
+      if (inPoly(px, py, pts)) return zone;
     }
-    setSelectedZone(null);
+    return null;
   }, [lm]);
+
+  // ── Zoom helper ───────────────────────────────────────────────────────────
+
+  const applyZoom = useCallback((zone, pts) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const r = canvas.getBoundingClientRect();
+    const xs = pts.map(p => p.x), ys = pts.map(p => p.y);
+    const cx = (Math.min(...xs) + Math.max(...xs)) / 2;
+    const cy = (Math.min(...ys) + Math.max(...ys)) / 2;
+    const zoneW = Math.max(...xs) - Math.min(...xs);
+    const zoneH = Math.max(...ys) - Math.min(...ys);
+    const vizX = (1 - cx / canvas.width) * r.width;
+    const vizY = (cy / canvas.height) * r.height;
+    const dispW = (zoneW / canvas.width) * r.width;
+    const dispH = (zoneH / canvas.height) * r.height;
+    const scale = Math.min(
+      dispW > 0 ? r.width * 0.75 / dispW : 3,
+      dispH > 0 ? r.height * 0.75 / dispH : 3,
+      3.2,
+    );
+    setZoomStyle({
+      transform: `scale(${scale.toFixed(2)})`,
+      transformOrigin: `${vizX.toFixed(1)}px ${vizY.toFixed(1)}px`,
+      transition: 'transform 0.35s cubic-bezier(0.4,0,0.2,1)',
+    });
+  }, []);
+
+  // ── Interaction ───────────────────────────────────────────────────────────
+
+  const switchMode = (newMode) => {
+    setMode(newMode);
+    setZoomStyle({});
+    setSelectedZone(null);
+  };
+
+  const handleTap = useCallback((clientX, clientY) => {
+    if (mode !== 'tap') return;
+    const z = findZoneAt(clientX, clientY);
+    setSelectedZone(z ?? null);
+  }, [mode, findZoneAt]);
+
+  const handleMove = useCallback((clientX, clientY) => {
+    if (mode !== 'hover') return;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const z = findZoneAt(clientX, clientY);
+    if (z?.id !== activeRef.current?.id) {
+      setSelectedZone(z ?? null);
+      if (z) {
+        const pts = getPolyPts(z, lm, canvas.width, canvas.height);
+        applyZoom(z, pts);
+      } else {
+        setZoomStyle({});
+      }
+    }
+  }, [mode, findZoneAt, lm, applyZoom]);
+
+  // ── Render ────────────────────────────────────────────────────────────────
+  const showHoverValidate = mode === 'hover' && selectedZone;
 
   return (
     <div className="scanner">
       <div className="scan-bar">
         <button className="btn-back" onClick={onBack}>← Nouveau scan</button>
-        <span className="status-msg">
-          {selectedZone ? `${selectedZone.icon} ${selectedZone.name}` : 'Touchez une zone du visage'}
-        </span>
-        {selectedZone && (
-          <button className="btn-back" onClick={() => setSelectedZone(null)}>✕</button>
+
+        {showHoverValidate ? (
+          <>
+            <span className="status-msg" style={{ color: '#fff', fontWeight: 600 }}>
+              {selectedZone.name}
+            </span>
+            <button className="btn-validate" onClick={() => onZoneSelect(selectedZone)}>
+              Valider →
+            </button>
+          </>
+        ) : (
+          <>
+            <span className="status-msg">
+              {mode === 'hover'
+                ? 'Glissez pour explorer'
+                : (selectedZone ? selectedZone.name : 'Touchez une zone du visage')}
+            </span>
+            <div className="mode-toggle">
+              <button className={`mode-btn${mode === 'tap' ? ' active' : ''}`} onClick={() => switchMode('tap')}>Taper</button>
+              <button className={`mode-btn${mode === 'hover' ? ' active' : ''}`} onClick={() => switchMode('hover')}>Glisser</button>
+            </div>
+            {mode === 'tap' && selectedZone && (
+              <button className="btn-back" style={{ padding: '0.4rem 0.6rem' }} onClick={() => setSelectedZone(null)}>✕</button>
+            )}
+          </>
         )}
       </div>
 
-      <div className="cam-wrap">
+      <div className="cam-wrap" style={zoomStyle}>
         <img src={imageData} className="cam-video" alt="" draggable={false} />
         <canvas
           ref={canvasRef}
           className="cam-canvas"
           onClick={(e) => handleTap(e.clientX, e.clientY)}
+          onMouseMove={(e) => handleMove(e.clientX, e.clientY)}
           onTouchEnd={(e) => {
             e.preventDefault();
             if (!e.changedTouches.length) return;
             const t = e.changedTouches[0];
             handleTap(t.clientX, t.clientY);
           }}
+          onTouchMove={(e) => {
+            e.preventDefault();
+            if (!e.touches.length) return;
+            const t = e.touches[0];
+            handleMove(t.clientX, t.clientY);
+          }}
         />
       </div>
 
-      {selectedZone && (
+      {mode === 'tap' && selectedZone && (
         <div className="facemap-panel">
           <div className="facemap-header">
-            <span className="facemap-icon">{selectedZone.icon}</span>
+            <div className="facemap-zone-dot" style={{ background: selectedZone.color }} />
             <div className="facemap-meta">
               <div className="facemap-name">{selectedZone.name}</div>
               <div className="facemap-desc">{selectedZone.desc}</div>

@@ -147,7 +147,10 @@ html, body, #root {
   animation: slideUp .3s cubic-bezier(.4,0,.2,1);
 }
 @keyframes slideUp { from{transform:translateY(100%)} to{transform:translateY(0)} }
-.confirm-icon { font-size: 2.4rem; margin-bottom: .6rem; }
+.confirm-zone-dot {
+  width: 36px; height: 36px; border-radius: 50%; margin: 0 auto .8rem;
+  box-shadow: 0 0 18px currentColor;
+}
 .confirm-label { font-size: .75rem; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin-bottom: .3rem; }
 .confirm-name { font-size: 1.35rem; font-weight: 600; margin-bottom: .4rem; }
 .confirm-desc { font-size: .85rem; color: var(--muted); margin-bottom: 1.4rem; line-height: 1.5; }
@@ -180,7 +183,7 @@ html, body, #root {
 }
 .btn-back-tuto:hover { background: rgba(255,255,255,.1); }
 .tuto-header-zone { display: flex; align-items: center; gap: .5rem; }
-.tuto-header-icon { font-size: 1.2rem; }
+.tuto-header-dot { width: 14px; height: 14px; border-radius: 50%; flex-shrink: 0; }
 .tuto-header-name { font-size: .95rem; font-weight: 600; }
 
 .tuto-body { flex: 1; overflow-y: auto; padding: 1.2rem; overscroll-behavior: contain; }
@@ -190,9 +193,8 @@ html, body, #root {
   border-radius: 16px; padding: 1.3rem; margin-bottom: 1.4rem;
 }
 .tuto-zone-hero { display: flex; align-items: flex-start; gap: 1rem; margin-bottom: 1rem; }
-.tuto-zone-big-icon {
-  font-size: 2rem; width: 52px; height: 52px; display: flex; align-items: center;
-  justify-content: center; background: rgba(181,123,238,.12); border-radius: 14px; flex-shrink: 0;
+.tuto-zone-color-bar {
+  width: 6px; min-height: 52px; border-radius: 3px; flex-shrink: 0; align-self: stretch;
 }
 .tuto-zone-title { font-size: 1.2rem; font-weight: 600; margin-bottom: .3rem; }
 .tuto-zone-desc { font-size: .85rem; color: var(--muted); line-height: 1.5; }
@@ -243,6 +245,28 @@ html, body, #root {
 }
 .btn-capture:hover { opacity: .85; }
 
+/* ── MODE TOGGLE (tap / hover) ────────────────── */
+.mode-toggle {
+  display: flex; gap: 3px; flex-shrink: 0;
+  background: rgba(255,255,255,.07); border-radius: 8px; padding: 3px;
+}
+.mode-btn {
+  padding: 4px 10px; border: none; border-radius: 6px;
+  font-size: .75rem; font-weight: 600; cursor: pointer;
+  background: transparent; color: rgba(255,255,255,.45);
+  transition: all .18s; white-space: nowrap;
+}
+.mode-btn.active { background: rgba(255,255,255,.16); color: #fff; }
+
+/* ── VALIDATE BUTTON (hover mode) ──────────────── */
+.btn-validate {
+  padding: .42rem .85rem; border: none;
+  background: linear-gradient(135deg, var(--primary), var(--primary2));
+  color: #fff; border-radius: 8px; font-size: .82rem; font-weight: 700;
+  cursor: pointer; white-space: nowrap; flex-shrink: 0; transition: opacity .2s;
+}
+.btn-validate:hover { opacity: .85; }
+
 /* ── FACEMAP PANEL (slide-up zone info) ─────────── */
 .facemap-panel {
   background: var(--surface);
@@ -257,7 +281,10 @@ html, body, #root {
 .facemap-header {
   display: flex; align-items: center; gap: .85rem; margin-bottom: .9rem;
 }
-.facemap-icon { font-size: 1.9rem; flex-shrink: 0; }
+.facemap-zone-dot {
+  width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0;
+  box-shadow: 0 0 12px rgba(0,0,0,.3);
+}
 .facemap-meta { flex: 1; min-width: 0; }
 .facemap-name { font-size: 1.05rem; font-weight: 600; }
 .facemap-desc { font-size: .82rem; color: var(--muted); margin-top: .15rem; line-height: 1.4; }

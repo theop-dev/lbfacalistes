@@ -21,7 +21,7 @@ export default function TutorialPage({ zone, onBack }) {
           ← Retour au scan
         </button>
         <div className="tuto-header-zone">
-          <span className="tuto-header-icon">{zone.icon}</span>
+          <div className="tuto-header-dot" style={{ background: zone.color }} />
           <span className="tuto-header-name">{zone.name}</span>
         </div>
       </div>
@@ -31,7 +31,7 @@ export default function TutorialPage({ zone, onBack }) {
         {/* Zone info card */}
         <div className="tuto-zone-card">
           <div className="tuto-zone-hero">
-            <span className="tuto-zone-big-icon">{zone.icon}</span>
+            <div className="tuto-zone-color-bar" style={{ background: zone.color }} />
             <div>
               <h1 className="tuto-zone-title">{zone.name}</h1>
               <p className="tuto-zone-desc">{zone.desc}</p>
@@ -40,7 +40,7 @@ export default function TutorialPage({ zone, onBack }) {
 
           {zone.tips?.length > 0 && (
             <div className="tuto-tips">
-              <div className="tuto-tips-label">✦ Conseils essentiels</div>
+              <div className="tuto-tips-label">Conseils essentiels</div>
               <ul className="tuto-tips-list">
                 {zone.tips.map((tip, i) => (
                   <li key={i}>{tip}</li>

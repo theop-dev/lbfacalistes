@@ -4,7 +4,7 @@ export default function ConfirmDialog({ zone, onConfirm, onCancel }) {
   return (
     <div className="confirm-overlay">
       <div className="confirm-box">
-        <div className="confirm-icon">{zone.icon}</div>
+        <div className="confirm-zone-dot" style={{ background: zone.color }} />
         <div className="confirm-label">Zone sélectionnée</div>
         <div className="confirm-name">{zone.name}</div>
         <div className="confirm-desc">{zone.desc}</div>

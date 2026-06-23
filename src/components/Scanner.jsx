@@ -1,33 +1,27 @@
 import { useRef, useEffect, useCallback, useState } from 'react';
-// FaceMesh is loaded as a global script from CDN (see index.html)
-// Do NOT import from npm — Vite cannot bundle the MediaPipe WASM correctly
+// FaceMesh loaded via CDN in index.html — do NOT npm-import (WASM can't be bundled)
 import ZONES from '../data/zones';
 import ConfirmDialog from './ConfirmDialog';
 
-// ── Geometry ──────────────────────────────────────────────────────────────
+// ── Geometry ──────────────────────────────────────────────────────────────────
 
-// Canvas is CSS scaleX(-1) — map screen click → canvas internal coord
 function toCanvas(clientX, clientY, canvas) {
   const r = canvas.getBoundingClientRect();
   const rx = (clientX - r.left) * (canvas.width / r.width);
   const ry = (clientY - r.top) * (canvas.height / r.height);
-  return { x: canvas.width - rx, y: ry };
+  return { x: canvas.width - rx, y: ry }; // mirror x for scaleX(-1) canvas
 }
 
-// Ray-casting point-in-polygon
 function inPoly(px, py, pts) {
   let inside = false;
   for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
-    const xi = pts[i].x, yi = pts[i].y;
-    const xj = pts[j].x, yj = pts[j].y;
-    if (((yi > py) !== (yj > py)) && px < ((xj - xi) * (py - yi)) / (yj - yi) + xi) {
+    const xi = pts[i].x, yi = pts[i].y, xj = pts[j].x, yj = pts[j].y;
+    if (((yi > py) !== (yj > py)) && px < ((xj - xi) * (py - yi)) / (yj - yi) + xi)
       inside = !inside;
-    }
   }
   return inside;
 }
 
-// Convex hull via Andrew's monotone chain — always non-self-intersecting
 function convexHull(pts) {
   if (pts.length < 3) return pts;
   const s = [...pts].sort((a, b) => a.x !== b.x ? a.x - b.x : a.y - b.y);
@@ -51,7 +45,14 @@ function getPolyPts(zone, lm, w, h) {
   return zone.sortByAngle ? convexHull(pts) : pts;
 }
 
-// Hex color to rgba
+function polyArea(pts) {
+  let a = 0;
+  for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
+    a += (pts[j].x + pts[i].x) * (pts[j].y - pts[i].y);
+  }
+  return Math.abs(a / 2);
+}
+
 function hexRgba(hex, alpha) {
   const r = parseInt(hex.slice(1, 3), 16);
   const g = parseInt(hex.slice(3, 5), 16);
@@ -59,11 +60,12 @@ function hexRgba(hex, alpha) {
   return `rgba(${r},${g},${b},${alpha})`;
 }
 
-// ── Scanner ───────────────────────────────────────────────────────────────
+// ── Scanner ───────────────────────────────────────────────────────────────────
 
 export default function Scanner({ onBack, onConfirm, onCapture }) {
   const videoRef  = useRef(null);
   const canvasRef = useRef(null);
+  const camWrapRef = useRef(null);
   const animRef   = useRef(null);
   const streamRef = useRef(null);
   const fmRef     = useRef(null);
@@ -72,15 +74,16 @@ export default function Scanner({ onBack, onConfirm, onCapture }) {
   const pendIdRef = useRef(null);
   const faceWas   = useRef(false);
 
-  const [loaderText,  setLoaderText]  = useState('Chargement du modèle IA…');
+  const [loaderText,  setLoaderText]  = useState('Initialisation...');
   const [loading,     setLoading]     = useState(true);
-  const [status,      setStatus]      = useState('Initialisation…');
   const [hintVisible, setHintVisible] = useState(false);
   const [hovZone,     setHovZone]     = useState(null);
   const [pendZone,    setPendZone]    = useState(null);
   const [faceAlert,   setFaceAlert]   = useState(null);
+  const [mode,        setMode]        = useState('tap'); // 'tap' | 'hover'
+  const [zoomStyle,   setZoomStyle]   = useState({});
 
-  // ── Draw ────────────────────────────────────────────────────────────────
+  // ── Draw ──────────────────────────────────────────────────────────────────
 
   const draw = useCallback(() => {
     const canvas = canvasRef.current;
@@ -91,16 +94,14 @@ export default function Scanner({ onBack, onConfirm, onCapture }) {
     ctx.clearRect(0, 0, w, h);
     if (!lm) return;
 
-    // 1. Point cloud — all 468 landmarks as tiny glowing dots
     for (let i = 0; i < Math.min(lm.length, 468); i++) {
       const x = lm[i].x * w, y = lm[i].y * h;
       ctx.beginPath();
       ctx.arc(x, y, 1.1, 0, Math.PI * 2);
-      ctx.fillStyle = 'rgba(181,123,238,0.35)';
+      ctx.fillStyle = 'rgba(181,123,238,0.28)';
       ctx.fill();
     }
 
-    // 2. Zone polygons — draw large zones first so small ones render on top
     const sortedZones = [...ZONES].sort((a, b) => b.poly.length - a.poly.length);
     for (const zone of sortedZones) {
       const pts = getPolyPts(zone, lm, w, h);
@@ -111,7 +112,6 @@ export default function Scanner({ onBack, onConfirm, onCapture }) {
       const active = isHov || isPend;
 
       ctx.save();
-
       ctx.beginPath();
       ctx.moveTo(pts[0].x, pts[0].y);
       for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i].x, pts[i].y);
@@ -126,18 +126,16 @@ export default function Scanner({ onBack, onConfirm, onCapture }) {
 
       ctx.strokeStyle = active ? hexRgba(zone.color, 1) : hexRgba(zone.color, 0.35);
       ctx.lineWidth   = active ? 2.5 : 0.9;
-
       ctx.beginPath();
       ctx.moveTo(pts[0].x, pts[0].y);
       for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i].x, pts[i].y);
       ctx.closePath();
       ctx.stroke();
 
-      // Label when active
       if (active) {
         const cx = pts.reduce((s, p) => s + p.x, 0) / pts.length;
         const cy = pts.reduce((s, p) => s + p.y, 0) / pts.length;
-        const label = zone.icon + '  ' + zone.name;
+        const label = zone.name;
         ctx.font = '600 12px -apple-system, sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
@@ -146,19 +144,8 @@ export default function Scanner({ onBack, onConfirm, onCapture }) {
         ctx.shadowBlur = 0;
         ctx.fillStyle = 'rgba(7,7,15,0.88)';
         ctx.beginPath();
-        ctx.roundRect
-          ? ctx.roundRect(cx - tw / 2 - pad, cy - 12, tw + pad * 2, 24, 6)
-          : (() => {
-              const x = cx - tw / 2 - pad, y2 = cy - 12, bw = tw + pad * 2, bh = 24, r = 6;
-              ctx.moveTo(x + r, y2); ctx.lineTo(x + bw - r, y2);
-              ctx.quadraticCurveTo(x + bw, y2, x + bw, y2 + r);
-              ctx.lineTo(x + bw, y2 + bh - r);
-              ctx.quadraticCurveTo(x + bw, y2 + bh, x + bw - r, y2 + bh);
-              ctx.lineTo(x + r, y2 + bh);
-              ctx.quadraticCurveTo(x, y2 + bh, x, y2 + bh - r);
-              ctx.lineTo(x, y2 + r);
-              ctx.quadraticCurveTo(x, y2, x + r, y2);
-            })();
+        if (ctx.roundRect) ctx.roundRect(cx - tw / 2 - pad, cy - 12, tw + pad * 2, 24, 6);
+        else ctx.rect(cx - tw / 2 - pad, cy - 12, tw + pad * 2, 24);
         ctx.fill();
         ctx.strokeStyle = hexRgba(zone.color, 0.5);
         ctx.lineWidth = 1;
@@ -179,7 +166,7 @@ export default function Scanner({ onBack, onConfirm, onCapture }) {
     if (canvas.width !== w || canvas.height !== h) { canvas.width = w; canvas.height = h; }
   }, []);
 
-  // ── MediaPipe ───────────────────────────────────────────────────────────
+  // ── MediaPipe ─────────────────────────────────────────────────────────────
 
   const onResults = useCallback((results) => {
     resize();
@@ -188,7 +175,7 @@ export default function Scanner({ onBack, onConfirm, onCapture }) {
       lmRef.current = null;
       if (faceWas.current) {
         faceWas.current = false;
-        setFaceAlert({ msg: '⚠ Repositionnez-vous face à la caméra', type: 'warn' });
+        setFaceAlert({ msg: 'Repositionnez-vous face à la caméra', type: 'warn' });
         setTimeout(() => setFaceAlert(null), 3000);
       }
       draw();
@@ -199,9 +186,8 @@ export default function Scanner({ onBack, onConfirm, onCapture }) {
       faceWas.current = true;
       setLoading(false);
       setHintVisible(true);
-      setStatus('Visage détecté — appuyez sur une zone');
-      setFaceAlert({ msg: '✓ Visage détecté', type: 'ok' });
-      setTimeout(() => setFaceAlert(null), 3000);
+      setFaceAlert({ msg: 'Visage détecté', type: 'ok' });
+      setTimeout(() => setFaceAlert(null), 2500);
     }
     draw();
   }, [draw, resize]);
@@ -216,7 +202,7 @@ export default function Scanner({ onBack, onConfirm, onCapture }) {
     fmRef.current = fm;
 
     async function start() {
-      setLoaderText('Activation de la caméra…');
+      setLoaderText('Activation de la caméra...');
       try {
         const s = await navigator.mediaDevices.getUserMedia({
           video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 } },
@@ -228,8 +214,7 @@ export default function Scanner({ onBack, onConfirm, onCapture }) {
         video.srcObject = s;
         await new Promise(res => { video.onloadedmetadata = res; });
         await video.play();
-        setStatus('Placez votre visage face à la caméra');
-        setLoaderText('Détection du visage…');
+        setLoaderText('Détection du visage...');
         async function loop() {
           resize();
           if (video.readyState >= 2) { try { await fm.send({ image: video }); } catch (_) {} }
@@ -237,8 +222,7 @@ export default function Scanner({ onBack, onConfirm, onCapture }) {
         }
         loop();
       } catch {
-        setLoaderText('⚠ Accès caméra refusé — vérifiez les permissions');
-        setStatus('Caméra inaccessible');
+        setLoaderText('Accès caméra refusé — vérifiez les permissions');
       }
     }
     start();
@@ -256,24 +240,67 @@ export default function Scanner({ onBack, onConfirm, onCapture }) {
     return () => window.removeEventListener('resize', h);
   }, [resize, draw]);
 
-  // ── Interaction ─────────────────────────────────────────────────────────
+  // ── Zone finding (area-based — smallest polygon wins on overlap) ──────────
 
   const findZone = useCallback((px, py) => {
     const lm = lmRef.current;
     const canvas = canvasRef.current;
     if (!lm || !canvas) return null;
     const w = canvas.width, h = canvas.height;
-    // Smallest-area zone first (tightest match wins)
-    const sorted = [...ZONES].sort((a, b) => a.poly.length - b.poly.length);
-    for (const zone of sorted) {
-      const pts = getPolyPts(zone, lm, w, h);
+    const candidates = ZONES
+      .map(zone => ({ zone, pts: getPolyPts(zone, lm, w, h) }))
+      .filter(x => x.pts.length >= 3)
+      .map(x => ({ ...x, area: polyArea(x.pts) }))
+      .sort((a, b) => a.area - b.area);
+    for (const { zone, pts } of candidates) {
       if (inPoly(px, py, pts)) return zone;
     }
     return null;
   }, []);
 
+  // ── Zoom helper (hover mode) ───────────────────────────────────────────────
+
+  const applyZoom = useCallback((zone, pts) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const r = canvas.getBoundingClientRect();
+    const xs = pts.map(p => p.x), ys = pts.map(p => p.y);
+    const cx = (Math.min(...xs) + Math.max(...xs)) / 2;
+    const cy = (Math.min(...ys) + Math.max(...ys)) / 2;
+    const zoneW = Math.max(...xs) - Math.min(...xs);
+    const zoneH = Math.max(...ys) - Math.min(...ys);
+    // Visual coords in cam-wrap space (canvas has scaleX(-1))
+    const vizX = (1 - cx / canvas.width) * r.width;
+    const vizY = (cy / canvas.height) * r.height;
+    const dispW = (zoneW / canvas.width) * r.width;
+    const dispH = (zoneH / canvas.height) * r.height;
+    const scale = Math.min(
+      dispW > 0 ? r.width * 0.75 / dispW : 3,
+      dispH > 0 ? r.height * 0.75 / dispH : 3,
+      3.2,
+    );
+    setZoomStyle({
+      transform: `scale(${scale.toFixed(2)})`,
+      transformOrigin: `${vizX.toFixed(1)}px ${vizY.toFixed(1)}px`,
+      transition: 'transform 0.35s cubic-bezier(0.4,0,0.2,1)',
+    });
+  }, []);
+
+  // ── Interaction ───────────────────────────────────────────────────────────
+
+  const switchMode = useCallback((newMode) => {
+    setMode(newMode);
+    setZoomStyle({});
+    hovIdRef.current = null;
+    pendIdRef.current = null;
+    setHovZone(null);
+    setPendZone(null);
+    draw();
+  }, [draw]);
+
+  // Tap mode: mouse hover (cosmetic highlight only)
   const handleMouseMove = useCallback((e) => {
-    if (!lmRef.current || pendIdRef.current) return;
+    if (mode !== 'tap' || !lmRef.current || pendIdRef.current) return;
     const p = toCanvas(e.clientX, e.clientY, canvasRef.current);
     const z = findZone(p.x, p.y);
     const id = z?.id ?? null;
@@ -282,17 +309,40 @@ export default function Scanner({ onBack, onConfirm, onCapture }) {
       setHovZone(z ?? null);
       draw();
     }
-  }, [findZone, draw]);
+  }, [mode, findZone, draw]);
 
   const handleMouseLeave = useCallback(() => {
-    if (pendIdRef.current) return;
+    if (mode !== 'tap' || pendIdRef.current) return;
     hovIdRef.current = null;
     setHovZone(null);
     draw();
-  }, [draw]);
+  }, [mode, draw]);
 
+  // Hover mode: move selects zone + zoom
+  const handleHoverMove = useCallback((clientX, clientY) => {
+    if (mode !== 'hover' || !lmRef.current) return;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const p = toCanvas(clientX, clientY, canvas);
+    const z = findZone(p.x, p.y);
+    const id = z?.id ?? null;
+    if (id !== hovIdRef.current) {
+      hovIdRef.current = id;
+      setHovZone(z ?? null);
+      if (z) {
+        const lm = lmRef.current;
+        const pts = getPolyPts(z, lm, canvas.width, canvas.height);
+        applyZoom(z, pts);
+      } else {
+        setZoomStyle({});
+      }
+      draw();
+    }
+  }, [mode, findZone, applyZoom, draw]);
+
+  // Tap mode: click/tap selects pending zone
   const handleTap = useCallback((clientX, clientY) => {
-    if (!lmRef.current || pendIdRef.current) return;
+    if (mode !== 'tap' || !lmRef.current || pendIdRef.current) return;
     const p = toCanvas(clientX, clientY, canvasRef.current);
     const z = findZone(p.x, p.y);
     if (z) {
@@ -302,15 +352,21 @@ export default function Scanner({ onBack, onConfirm, onCapture }) {
       setPendZone(z);
       draw();
     }
-  }, [findZone, draw]);
+  }, [mode, findZone, draw]);
 
   const handleClick    = useCallback(e => handleTap(e.clientX, e.clientY), [handleTap]);
+
   const handleTouchEnd = useCallback(e => {
     e.preventDefault();
     if (!e.changedTouches.length) return;
-    const t = e.changedTouches[0];
-    handleTap(t.clientX, t.clientY);
-  }, [handleTap]);
+    if (mode === 'tap') handleTap(e.changedTouches[0].clientX, e.changedTouches[0].clientY);
+  }, [mode, handleTap]);
+
+  const handleTouchMove = useCallback(e => {
+    e.preventDefault();
+    if (mode !== 'hover' || !e.touches.length) return;
+    handleHoverMove(e.touches[0].clientX, e.touches[0].clientY);
+  }, [mode, handleHoverMove]);
 
   const cancelPending = useCallback(() => {
     pendIdRef.current = null;
@@ -335,8 +391,8 @@ export default function Scanner({ onBack, onConfirm, onCapture }) {
     off.width  = video.videoWidth  || video.clientWidth;
     off.height = video.videoHeight || video.clientHeight;
     off.getContext('2d').drawImage(video, 0, 0);
-    const imageData  = off.toDataURL('image/jpeg', 0.9);
-    const landmarks  = Array.from(lm).map(p => ({ x: p.x, y: p.y, z: p.z || 0 }));
+    const imageData = off.toDataURL('image/jpeg', 0.9);
+    const landmarks = Array.from(lm).map(p => ({ x: p.x, y: p.y, z: p.z || 0 }));
     onCapture({ imageData, landmarks });
   }, [onCapture]);
 
@@ -346,18 +402,40 @@ export default function Scanner({ onBack, onConfirm, onCapture }) {
     onBack();
   }, [onBack]);
 
-  // ── Render ───────────────────────────────────────────────────────────────
+  // ── Render ────────────────────────────────────────────────────────────────
+  const showHoverValidate = mode === 'hover' && hovZone;
+
   return (
     <div className="scanner">
       <div className="scan-bar">
         <button className="btn-back" onClick={handleBack}>← Retour</button>
-        <span className="status-msg">{status}</span>
-        {hintVisible && !pendZone && (
-          <button className="btn-capture" onClick={captureFrame}>📸 Carte</button>
+
+        {showHoverValidate ? (
+          <>
+            <span className="status-msg" style={{ color: '#fff', fontWeight: 600 }}>
+              {hovZone.name}
+            </span>
+            <button className="btn-validate" onClick={() => onConfirm(hovZone)}>
+              Valider →
+            </button>
+          </>
+        ) : (
+          <>
+            <span className="status-msg">
+              {mode === 'hover' ? 'Glissez sur une zone du visage' : (hintVisible ? 'Touchez une zone' : 'Placez votre visage face à la caméra')}
+            </span>
+            <div className="mode-toggle">
+              <button className={`mode-btn${mode === 'tap' ? ' active' : ''}`} onClick={() => switchMode('tap')}>Taper</button>
+              <button className={`mode-btn${mode === 'hover' ? ' active' : ''}`} onClick={() => switchMode('hover')}>Glisser</button>
+            </div>
+            {hintVisible && !pendZone && mode === 'tap' && (
+              <button className="btn-capture" onClick={captureFrame}>Carte</button>
+            )}
+          </>
         )}
       </div>
 
-      <div className="cam-wrap">
+      <div className="cam-wrap" ref={camWrapRef} style={zoomStyle}>
         <video ref={videoRef} className="cam-video" playsInline muted />
         <canvas
           ref={canvasRef}
@@ -366,19 +444,13 @@ export default function Scanner({ onBack, onConfirm, onCapture }) {
           onMouseLeave={handleMouseLeave}
           onClick={handleClick}
           onTouchEnd={handleTouchEnd}
+          onTouchMove={handleTouchMove}
         />
 
         {loading && (
           <div className="loader">
             <div className="face-outline"><div className="scan-line" /></div>
             <div className="loader-text">{loaderText}</div>
-          </div>
-        )}
-
-        {hovZone && !pendZone && (
-          <div className="tooltip-zone">
-            <span className="tip-name">{hovZone.icon} {hovZone.name}</span>
-            <span className="tip-desc">{hovZone.desc}</span>
           </div>
         )}
 

@@ -1,16 +1,10 @@
 // Polygon zones — MediaPipe Face Mesh landmark indices.
-// Face oval (silhouette) going clockwise from top (10):
-//   RIGHT side (user LEFT, MP high-x): 338,297,332,284,251,389,356,454 → ear 454,323,361,288,397,365,379,378,400,377 → chin 152
-//   LEFT side (user RIGHT, MP low-x): 148,176,149,150,136,172,58,132,93 → ear 234,127,162,21,54,103,67,109 → top
-//
 // Canvas is CSS scaleX(-1). MP "left" (low x) = user RIGHT on screen.
-// sortByAngle: true — vertices are automatically sorted by angle around centroid
-//   before drawing, preventing self-intersecting polygons. Use for all roughly
-//   convex/star-shaped zones. Do NOT use for eyes or lips (concave MediaPipe paths).
+// sortByAngle: true → convex hull (Andrew's monotone chain) used for drawing.
 
 const ZONES = [
 
-  // ── FRONT (hairline → above eyebrows) ───────────────────────────────────────
+  // ── FRONT ────────────────────────────────────────────────────────────────────
   {
     id: 'forehead',
     name: 'Front',
@@ -23,14 +17,14 @@ const ZONES = [
            107, 66, 105, 63, 70, 46, 53, 52, 65, 55,
            54, 103, 67, 109],
     desc: 'Rides, tension, hydratation, éclat',
-    tips: ['Appliquer sérum en mouvements ascendants', 'Protéger avec un SPF chaque matin', 'Zone la plus exposée au soleil'],
+    tips: ['Appliquer sérum en mouvements ascendants', 'Protéger avec un SPF chaque matin'],
     tutorials: [
       { title: 'Massage frontal : libérer les tensions', q: 'massage front tension beauté technique visage', dur: '~8 min' },
       { title: 'Routine anti-rides pour le front', q: 'routine soin anti-rides front visage beauté', dur: '~6 min' },
     ],
   },
 
-  // ── GLABELLE (entre sourcils) ────────────────────────────────────────────────
+  // ── GLABELLE ─────────────────────────────────────────────────────────────────
   {
     id: 'glabella',
     name: 'Glabelle',
@@ -40,14 +34,14 @@ const ZONES = [
     poly: [9, 107, 66, 105, 63, 70, 46, 53, 52, 65, 55,
            285, 295, 282, 283, 276, 300, 293, 334, 296, 336],
     desc: 'Ride du lion, point de pression, réflexologie',
-    tips: ['Point de pression anti-stress et anti-migraine', 'Massage circulaire doux pour soulager les headaches'],
+    tips: ['Point de pression anti-stress', 'Massage circulaire doux pour les headaches'],
     tutorials: [
       { title: 'Effacer la ride du lion', q: 'effacer ride lion front tutoriel soin beauté', dur: '~7 min' },
       { title: 'Massage glabelle : point de pression', q: 'massage glabelle point pression réflexologie visage', dur: '~5 min' },
     ],
   },
 
-  // ── SOURCIL DROIT (user right = MP left, low-x) ─────────────────────────────
+  // ── SOURCIL DROIT (user right = MP left, low-x) ──────────────────────────────
   {
     id: 'right_brow',
     name: 'Sourcil droit',
@@ -63,7 +57,7 @@ const ZONES = [
     ],
   },
 
-  // ── SOURCIL GAUCHE (user left = MP right, high-x) ───────────────────────────
+  // ── SOURCIL GAUCHE (user left = MP right, high-x) ────────────────────────────
   {
     id: 'left_brow',
     name: 'Sourcil gauche',
@@ -79,46 +73,44 @@ const ZONES = [
     ],
   },
 
-  // ── ŒIL DROIT (user right, MP FACEMESH_LEFT_EYE) ────────────────────────────
+  // ── ŒIL DROIT (user right, exact MediaPipe eyelid loop) ──────────────────────
   {
     id: 'right_eye',
     name: 'Œil droit',
-    icon: '👁',
+    icon: '◔',
     color: '#6EB4FF',
     poly: [33, 7, 163, 144, 145, 153, 154, 155, 133, 173, 157, 158, 159, 160, 161, 246],
     desc: 'Eye-liner, mascara, cils, iris, paupières',
-    tips: ['Tirer le trait d\'eye-liner en une seule ligne', 'Appliquer le mascara en zigzag à la base des cils'],
+    tips: ['Tirer le trait d\'eye-liner en une seule ligne', 'Mascara en zigzag à la base des cils'],
     tutorials: [
       { title: 'Eye-liner parfait pour débutantes', q: 'eye liner parfait tutoriel débutante technique', dur: '~9 min' },
       { title: 'Mascara : cils plus longs et volumineux', q: 'mascara cils longs volume tutoriel technique', dur: '~6 min' },
     ],
   },
 
-  // ── ŒIL GAUCHE (user left, MP FACEMESH_RIGHT_EYE) ───────────────────────────
+  // ── ŒIL GAUCHE (user left, exact MediaPipe eyelid loop) ──────────────────────
   {
     id: 'left_eye',
     name: 'Œil gauche',
-    icon: '👁',
+    icon: '◔',
     color: '#6EB4FF',
     poly: [263, 249, 390, 373, 374, 380, 381, 382, 362, 398, 384, 385, 386, 387, 388, 466],
     desc: 'Eye-liner, mascara, cils, iris, paupières',
-    tips: ['Tirer le trait d\'eye-liner en une seule ligne', 'Appliquer le mascara en zigzag à la base des cils'],
+    tips: ['Tirer le trait d\'eye-liner en une seule ligne', 'Mascara en zigzag à la base des cils'],
     tutorials: [
       { title: 'Eye-liner parfait pour débutantes', q: 'eye liner parfait tutoriel débutante technique', dur: '~9 min' },
       { title: 'Mascara : cils plus longs et volumineux', q: 'mascara cils longs volume tutoriel technique', dur: '~6 min' },
     ],
   },
 
-  // ── CERNE DROIT (user right, under MP left eye) ──────────────────────────────
-  // Sub-orbital ONLY — no upper eyelid landmarks (those caused a huge polygon
-  // wrapping the entire eye area when convex hull was applied).
+  // ── CERNE DROIT — inner sub-orbital strip only, no pommette overlap ───────────
   {
     id: 'right_undereye',
     name: 'Cerne droit',
-    icon: '◔',
+    icon: '◉',
     color: '#96E6FF',
     sortByAngle: true,
-    poly: [243, 112, 26, 22, 23, 24, 110, 25, 130, 120, 121, 119, 118, 117],
+    poly: [243, 112, 26, 22, 23, 24, 110, 25, 130],
     desc: 'Cernes, poches, anti-fatigue, contour des yeux',
     tips: ['Tapoter — ne jamais frotter', 'Crème contour des yeux matin et soir'],
     tutorials: [
@@ -127,14 +119,14 @@ const ZONES = [
     ],
   },
 
-  // ── CERNE GAUCHE (user left, under MP right eye) ─────────────────────────────
+  // ── CERNE GAUCHE — inner sub-orbital strip only ───────────────────────────────
   {
     id: 'left_undereye',
     name: 'Cerne gauche',
-    icon: '◔',
+    icon: '◉',
     color: '#96E6FF',
     sortByAngle: true,
-    poly: [463, 341, 256, 252, 253, 254, 339, 255, 359, 349, 350, 348, 347, 346],
+    poly: [463, 341, 256, 252, 253, 254, 339, 255, 359],
     desc: 'Cernes, poches, anti-fatigue, contour des yeux',
     tips: ['Tapoter — ne jamais frotter', 'Crème contour des yeux matin et soir'],
     tutorials: [
@@ -143,8 +135,7 @@ const ZONES = [
     ],
   },
 
-  // ── TEMPE DROITE (user right, lateral face strip from outer eye to jaw) ───────
-  // Strictly outer lateral face — no shared landmarks with cheek/jaw/cheekbone.
+  // ── TEMPE DROITE ──────────────────────────────────────────────────────────────
   {
     id: 'right_temple',
     name: 'Tempe droite',
@@ -153,14 +144,14 @@ const ZONES = [
     sortByAngle: true,
     poly: [21, 162, 127, 234, 54, 103, 67, 109],
     desc: 'Zone temporale, migraines, détente, réflexologie',
-    tips: ['Point de pression anti-migraine sur la tempe', 'Massage circulaire doux pour relâcher les tensions', 'Zone très sensible — pression légère uniquement'],
+    tips: ['Point de pression anti-migraine sur la tempe', 'Massage circulaire doux — pression légère uniquement'],
     tutorials: [
       { title: 'Massage temporal : soulager les migraines', q: 'massage temporal soulager migraines technique beauté', dur: '~6 min' },
       { title: 'Contouring tempes : affinement du visage', q: 'contouring tempes affinement visage tutoriel', dur: '~5 min' },
     ],
   },
 
-  // ── TEMPE GAUCHE (user left, lateral face strip from outer eye to jaw) ────────
+  // ── TEMPE GAUCHE ──────────────────────────────────────────────────────────────
   {
     id: 'left_temple',
     name: 'Tempe gauche',
@@ -169,56 +160,26 @@ const ZONES = [
     sortByAngle: true,
     poly: [251, 389, 356, 454, 284, 332, 297, 338],
     desc: 'Zone temporale, migraines, détente, réflexologie',
-    tips: ['Point de pression anti-migraine sur la tempe', 'Massage circulaire doux pour relâcher les tensions'],
+    tips: ['Point de pression anti-migraine sur la tempe', 'Massage circulaire doux pour soulager les tensions'],
     tutorials: [
       { title: 'Massage temporal : soulager les migraines', q: 'massage temporal soulager migraines technique beauté', dur: '~6 min' },
       { title: 'Contouring tempes : affinement du visage', q: 'contouring tempes affinement visage tutoriel', dur: '~5 min' },
     ],
   },
 
-  // ── POMMETTE DROITE (user right, outer cheekbone under right eye) ────────────
-  // Outer sub-orbital area only — no shared landmarks with cheek or undereye.
-  {
-    id: 'right_cheekbone',
-    name: 'Pommette droite',
-    icon: '✧',
-    color: '#FFAAD2',
-    sortByAngle: true,
-    poly: [247, 30, 29, 27, 28, 56, 190, 120, 121, 119, 118],
-    desc: 'Highlighter, sculpture, blush',
-    tips: ['Highlighter sur le point le plus haut de la pommette', 'Sourire pour trouver l\'emplacement exact du blush'],
-    tutorials: [
-      { title: 'Highlighter pommettes : effet lumineux', q: 'highlighter pommettes effet lumineux tutoriel', dur: '~7 min' },
-      { title: 'Sculpter les pommettes au contouring', q: 'sculpter pommettes contouring maquillage tutoriel', dur: '~8 min' },
-    ],
-  },
-
-  // ── POMMETTE GAUCHE (user left, outer cheekbone under left eye) ──────────────
-  {
-    id: 'left_cheekbone',
-    name: 'Pommette gauche',
-    icon: '✧',
-    color: '#FFAAD2',
-    sortByAngle: true,
-    poly: [467, 260, 259, 257, 258, 286, 414, 349, 350, 348, 347],
-    desc: 'Highlighter, sculpture, blush',
-    tips: ['Highlighter sur le point le plus haut de la pommette', 'Sourire pour trouver l\'emplacement exact du blush'],
-    tutorials: [
-      { title: 'Highlighter pommettes : effet lumineux', q: 'highlighter pommettes effet lumineux tutoriel', dur: '~7 min' },
-      { title: 'Sculpter les pommettes au contouring', q: 'sculpter pommettes contouring maquillage tutoriel', dur: '~8 min' },
-    ],
-  },
-
-  // ── JOUE DROITE (user right) ─────────────────────────────────────────────────
-  // Middle cheek only — no shared landmarks with jaw, temple, or cheekbone.
+  // ── JOUE DROITE — pleine joue de la mâchoire aux pommettes (user right) ───────
+  // Includes jaw landmarks + outer sub-orbital; cheek zone wins by area where
+  // it doesn't overlap with smaller jaw/undereye zones.
   {
     id: 'right_cheek',
     name: 'Joue droite',
-    icon: '🌸',
+    icon: '◈',
     color: '#FF8CC8',
     sortByAngle: true,
-    poly: [92, 165, 206, 207, 147, 116, 123, 143, 111],
-    desc: 'Blush, contouring, hydratation, drainage lymphatique',
+    poly: [234, 93, 132, 58, 172, 136, 150,
+           61, 92, 165, 206, 207, 147, 123, 116, 143,
+           111, 117, 118, 119, 120, 121],
+    desc: 'Blush, contouring, pommettes, drainage lymphatique',
     tips: ['Sourire pour trouver la zone du blush', 'Massage drainant vers les oreilles', 'Hydrater matin et soir'],
     tutorials: [
       { title: 'Appliquer le blush selon sa morphologie', q: 'appliquer blush joues morphologie visage tutoriel', dur: '~8 min' },
@@ -226,15 +187,17 @@ const ZONES = [
     ],
   },
 
-  // ── JOUE GAUCHE (user left) — mirror of right_cheek ─────────────────────────
+  // ── JOUE GAUCHE — pleine joue (user left) ────────────────────────────────────
   {
     id: 'left_cheek',
     name: 'Joue gauche',
-    icon: '🌸',
+    icon: '◈',
     color: '#FF8CC8',
     sortByAngle: true,
-    poly: [322, 391, 426, 427, 376, 345, 352, 372, 340],
-    desc: 'Blush, contouring, hydratation, drainage lymphatique',
+    poly: [454, 323, 361, 288, 397, 365, 379,
+           291, 322, 391, 426, 427, 376, 352, 345, 372,
+           340, 346, 347, 348, 349, 350],
+    desc: 'Blush, contouring, pommettes, drainage lymphatique',
     tips: ['Sourire pour trouver la zone du blush', 'Massage drainant vers les oreilles'],
     tutorials: [
       { title: 'Appliquer le blush selon sa morphologie', q: 'appliquer blush joues morphologie visage tutoriel', dur: '~8 min' },
@@ -242,10 +205,7 @@ const ZONES = [
     ],
   },
 
-  // ── ARÊTE DU NEZ (nose bridge) ───────────────────────────────────────────────
-  // Old polygon had landmarks 429,358,327,326 which are nasolabial/cheek area —
-  // they were pulling the polygon far out to the sides. Replaced with correct
-  // symmetric nose-dorsum landmarks only.
+  // ── ARÊTE DU NEZ ─────────────────────────────────────────────────────────────
   {
     id: 'nose_bridge',
     name: 'Arête du nez',
@@ -261,7 +221,7 @@ const ZONES = [
     ],
   },
 
-  // ── POINTE & AILES DU NEZ ────────────────────────────────────────────────────
+  // ── POINTE DU NEZ ─────────────────────────────────────────────────────────────
   {
     id: 'nose_tip',
     name: 'Pointe du nez',
@@ -277,7 +237,7 @@ const ZONES = [
     ],
   },
 
-  // ── AILE DROITE (user right, MP left nostril) ────────────────────────────────
+  // ── AILE DROITE (user right) ──────────────────────────────────────────────────
   {
     id: 'right_nostril',
     name: 'Aile droite du nez',
@@ -291,7 +251,7 @@ const ZONES = [
     ],
   },
 
-  // ── AILE GAUCHE (user left, MP right nostril) ────────────────────────────────
+  // ── AILE GAUCHE (user left) ───────────────────────────────────────────────────
   {
     id: 'left_nostril',
     name: 'Aile gauche du nez',
@@ -305,7 +265,7 @@ const ZONES = [
     ],
   },
 
-  // ── PHILTRUM (entre base du nez et lèvre sup) ────────────────────────────────
+  // ── PHILTRUM ──────────────────────────────────────────────────────────────────
   {
     id: 'philtrum',
     name: 'Philtrum',
@@ -320,11 +280,11 @@ const ZONES = [
     ],
   },
 
-  // ── LÈVRE SUPÉRIEURE ─────────────────────────────────────────────────────────
+  // ── LÈVRE SUPÉRIEURE ──────────────────────────────────────────────────────────
   {
     id: 'upper_lip',
     name: 'Lèvre supérieure',
-    icon: '💄',
+    icon: '◈',
     color: '#FF6489',
     poly: [61, 185, 40, 39, 37, 0, 267, 269, 270, 409, 291, 308, 415, 310, 311, 312, 13, 82, 81, 80, 191, 78],
     desc: 'Crayon, volume, contour, rouge à lèvres',
@@ -335,11 +295,11 @@ const ZONES = [
     ],
   },
 
-  // ── LÈVRE INFÉRIEURE ─────────────────────────────────────────────────────────
+  // ── LÈVRE INFÉRIEURE ──────────────────────────────────────────────────────────
   {
     id: 'lower_lip',
     name: 'Lèvre inférieure',
-    icon: '💋',
+    icon: '◈',
     color: '#FF4678',
     poly: [291, 375, 321, 405, 314, 17, 84, 181, 91, 146, 61, 78, 95, 88, 178, 87, 14, 317, 402, 318, 324, 308],
     desc: 'Gloss, hydratation, volume, soin',
@@ -350,7 +310,7 @@ const ZONES = [
     ],
   },
 
-  // ── MENTON ───────────────────────────────────────────────────────────────────
+  // ── MENTON ────────────────────────────────────────────────────────────────────
   {
     id: 'chin',
     name: 'Menton',
@@ -367,7 +327,6 @@ const ZONES = [
   },
 
   // ── MÂCHOIRE DROITE (user right) ─────────────────────────────────────────────
-  // Strictly outer jaw silhouette — no shared landmarks with cheek or chin.
   {
     id: 'right_jaw',
     name: 'Mâchoire droite',
@@ -376,7 +335,7 @@ const ZONES = [
     sortByAngle: true,
     poly: [234, 93, 132, 58, 172, 136, 150, 149],
     desc: 'Masséter, jawline, contouring, détente musculaire',
-    tips: ['Massage du masséter pour relâcher les tensions', 'Zone clé pour les serrements de mâchoire (bruxisme)'],
+    tips: ['Massage du masséter pour relâcher les tensions', 'Zone clé pour le bruxisme (serrement de mâchoire)'],
     tutorials: [
       { title: 'Sculpter la mâchoire : jawline makeup', q: 'sculpter mâchoire jawline contouring tutoriel', dur: '~7 min' },
       { title: 'Massage masséter : relâcher la tension', q: 'massage masséter relâcher tension mâchoire', dur: '~6 min' },
@@ -392,7 +351,7 @@ const ZONES = [
     sortByAngle: true,
     poly: [454, 323, 361, 288, 397, 365, 379, 378],
     desc: 'Masséter, jawline, contouring, détente musculaire',
-    tips: ['Massage du masséter pour relâcher les tensions', 'Zone clé pour les serrements de mâchoire (bruxisme)'],
+    tips: ['Massage du masséter pour relâcher les tensions', 'Zone clé pour le bruxisme (serrement de mâchoire)'],
     tutorials: [
       { title: 'Sculpter la mâchoire : jawline makeup', q: 'sculpter mâchoire jawline contouring tutoriel', dur: '~7 min' },
       { title: 'Massage masséter : relâcher la tension', q: 'massage masséter relâcher tension mâchoire', dur: '~6 min' },
